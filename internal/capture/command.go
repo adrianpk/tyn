@@ -1,13 +1,13 @@
 package capture
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func NewCommand() *cobra.Command {
+func NewCommand(repo Repo) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capture",
 		Aliases: []string{"c"},
@@ -15,12 +15,18 @@ func NewCommand() *cobra.Command {
 		Args:    cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input := strings.Join(args, " ")
-			node, err := Parse(input)
+			node, err := NewNode(input)
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "%+v", node)
+			// WIP: The persistence mechanism will remain, but will be implemented in a more polished way in future versions.
+			err = repo.Create(cmd.Context(), node)
+			if err != nil {
+				return err
+			}
+
+			log.Printf("%+v", node)
 			return nil
 		},
 	}
