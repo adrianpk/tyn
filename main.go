@@ -19,7 +19,7 @@ func main() {
 
 	s := svc.New(r)
 
-	rootCmd := &cobra.Command{Use: "tyn"}
+	rootCmd := &cobra.Command{Use: "tn"}
 	rootCmd.AddCommand(capture.NewCommand(s))
 	rootCmd.AddCommand(list.NewCommand(s))
 

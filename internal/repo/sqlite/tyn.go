@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/adrianpk/tyn/internal/model"
 	_ "modernc.org/sqlite"
@@ -89,11 +90,14 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 }
 
 func stringSliceToCSV(s []string) string {
-	return model.EncodeCSV(s)
+	return strings.Join(s, ",")
 }
 
 func csvToStringSlice(s string) []string {
-	return model.DecodeCSV(s)
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ",")
 }
 
 func migrate(db *sql.DB) error {

@@ -1,11 +1,11 @@
-APP_NAME = tyn
+APP_NAME = tn
 
 .PHONY: all build run run-race test test-race lint format check install-hooks demo
 
 all: build
 
 build:
-	go build -o bin/tyn .
+	go build -o bin/tn .
 
 run: build
 	./bin/$(APP_NAME)
@@ -32,8 +32,8 @@ install-hooks:
 	chmod +x scripts/hooks/pre-commit
 
 demo:
-	bin/tyn capture "This is a simple note."
-	bin/tyn capture "Note with #tag1 #tag2 @home @office"
-	bin/tyn capture "A task :todo"
-	bin/tyn capture "A task with override date :done ^2025-06-20"
-	bin/tyn capture "A useful link https://example.com"
+	bin/tn capture "This is a simple note."
+	bin/tn capture "Note with #tag1 #tag2 @home @office"
+	bin/tn capture "A task :todo"
+	bin/tn capture "A task with override date :done ^2025-06-20"
+	bin/tn capture "A useful link https://example.com"
