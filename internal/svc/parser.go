@@ -1,13 +1,15 @@
-package capture
+package svc
 
 import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/adrianpk/tyn/internal/model"
 )
 
-func Parse(input string) (Node, error) {
-	item := Node{Date: time.Now()}
+func Parse(input string) (model.Node, error) {
+	item := model.Node{Date: time.Now()}
 	tokens := strings.Fields(input)
 	var content []string
 
@@ -36,15 +38,11 @@ func Parse(input string) (Node, error) {
 
 	switch {
 	case item.Status != "":
-		item.Type = Type.Task
+		item.Type = "task"
 	case item.Link != "":
-		item.Type = Type.Link
+		item.Type = "link"
 	default:
-		item.Type = Type.Note
-	}
-
-	if !Type.Validate(item.Type) {
-		return item, errors.New("invalid item type: " + item.Type)
+		item.Type = "note"
 	}
 
 	return item, nil

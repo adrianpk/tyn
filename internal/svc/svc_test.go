@@ -1,25 +1,25 @@
-package capture
+package svc
 
 import (
 	"testing"
 	"time"
+
+	"github.com/adrianpk/tyn/internal/model"
 )
 
-func TestNewNode(t *testing.T) {
+func TestParseAndNodeConstruction(t *testing.T) {
 	baseTime := time.Now()
-
 	overrideDate, _ := time.Parse("2006-01-02", "2025-06-17")
-
 	tests := []struct {
 		name    string
 		input   string
-		want    Node
+		want    model.Node
 		wantErr bool
 	}{
 		{
 			name:  "simple note",
 			input: "this is a simple note",
-			want: Node{
+			want: model.Node{
 				Type:    "note",
 				Content: "this is a simple note",
 				Date:    baseTime,
@@ -29,7 +29,7 @@ func TestNewNode(t *testing.T) {
 		{
 			name:  "note with tags",
 			input: "note with #tag1 #tag2",
-			want: Node{
+			want: model.Node{
 				Type:    "note",
 				Content: "note with",
 				Tags:    []string{"tag1", "tag2"},
@@ -39,8 +39,8 @@ func TestNewNode(t *testing.T) {
 		},
 		{
 			name:  "task with status",
-			input: "task !todo",
-			want: Node{
+			input: "task :todo",
+			want: model.Node{
 				Type:    "task",
 				Content: "task",
 				Status:  "todo",
@@ -51,7 +51,7 @@ func TestNewNode(t *testing.T) {
 		{
 			name:  "note with places",
 			input: "note from @home @office",
-			want: Node{
+			want: model.Node{
 				Type:    "note",
 				Content: "note from",
 				Places:  []string{"home", "office"},
@@ -62,7 +62,7 @@ func TestNewNode(t *testing.T) {
 		{
 			name:  "link with url",
 			input: "check this https://example.com",
-			want: Node{
+			want: model.Node{
 				Type:    "link",
 				Content: "check this",
 				Link:    "https://example.com",
@@ -72,8 +72,8 @@ func TestNewNode(t *testing.T) {
 		},
 		{
 			name:  "complete note",
-			input: "complete note #tag @place !todo ^2025-06-17 https://example.com",
-			want: Node{
+			input: "complete note #tag @place :todo ^2025-06-17 https://example.com",
+			want: model.Node{
 				Type:         "task",
 				Content:      "complete note",
 				Tags:         []string{"tag"},
@@ -94,45 +94,38 @@ func TestNewNode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewNode(tt.input)
-
+			node, err := Parse(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewNode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
 			if err != nil {
 				return
 			}
-
-			// Since Date is set to time.Now(), we only check if it's not zero
-			if got.Date.IsZero() {
-				t.Error("NewNode() Date is zero")
+			if node.Date.IsZero() {
+				t.Error("Parse() Date is zero")
 			}
-
-			// Replace the actual Date with the expected one for comparison
-			got.Date = tt.want.Date
-
-			if got.Type != tt.want.Type {
-				t.Errorf("NewNode() Type = %v, want %v", got.Type, tt.want.Type)
+			node.Date = tt.want.Date
+			if node.Type != tt.want.Type {
+				t.Errorf("Parse() Type = %v, want %v", node.Type, tt.want.Type)
 			}
-			if got.Content != tt.want.Content {
-				t.Errorf("NewNode() Content = %v, want %v", got.Content, tt.want.Content)
+			if node.Content != tt.want.Content {
+				t.Errorf("Parse() Content = %v, want %v", node.Content, tt.want.Content)
 			}
-			if got.Link != tt.want.Link {
-				t.Errorf("NewNode() Link = %v, want %v", got.Link, tt.want.Link)
+			if node.Link != tt.want.Link {
+				t.Errorf("Parse() Link = %v, want %v", node.Link, tt.want.Link)
 			}
-			if !sliceEqual(got.Tags, tt.want.Tags) {
-				t.Errorf("NewNode() Tags = %v, want %v", got.Tags, tt.want.Tags)
+			if !sliceEqual(node.Tags, tt.want.Tags) {
+				t.Errorf("Parse() Tags = %v, want %v", node.Tags, tt.want.Tags)
 			}
-			if !sliceEqual(got.Places, tt.want.Places) {
-				t.Errorf("NewNode() Places = %v, want %v", got.Places, tt.want.Places)
+			if !sliceEqual(node.Places, tt.want.Places) {
+				t.Errorf("Parse() Places = %v, want %v", node.Places, tt.want.Places)
 			}
-			if got.Status != tt.want.Status {
-				t.Errorf("NewNode() Status = %v, want %v", got.Status, tt.want.Status)
+			if node.Status != tt.want.Status {
+				t.Errorf("Parse() Status = %v, want %v", node.Status, tt.want.Status)
 			}
-			if !timePointersEqual(got.OverrideDate, tt.want.OverrideDate) {
-				t.Errorf("NewNode() OverrideDate = %v, want %v", got.OverrideDate, tt.want.OverrideDate)
+			if !timePointersEqual(node.OverrideDate, tt.want.OverrideDate) {
+				t.Errorf("Parse() OverrideDate = %v, want %v", node.OverrideDate, tt.want.OverrideDate)
 			}
 		})
 	}

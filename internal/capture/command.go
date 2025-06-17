@@ -4,10 +4,11 @@ import (
 	"log"
 	"strings"
 
+	"github.com/adrianpk/tyn/internal/svc"
 	"github.com/spf13/cobra"
 )
 
-func NewCommand(repo Repo) *cobra.Command {
+func NewCommand(svc *svc.Svc) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capture",
 		Aliases: []string{"c"},
@@ -15,13 +16,16 @@ func NewCommand(repo Repo) *cobra.Command {
 		Args:    cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input := strings.Join(args, " ")
-			node, err := NewNode(input)
+			node, err := svc.Parser(input)
 			if err != nil {
 				return err
 			}
 
-			// WIP: The persistence mechanism will remain, but will be implemented in a more polished way in future versions.
-			err = repo.Create(cmd.Context(), node)
+			node.GenID()
+
+			log.Printf("Captured node: %s", node.ID)
+
+			err = svc.Repo.Create(cmd.Context(), node)
 			if err != nil {
 				return err
 			}

@@ -1,4 +1,4 @@
-package capture
+package model
 
 import (
 	"strings"
@@ -19,16 +19,6 @@ type Node struct {
 	OverrideDate *time.Time
 }
 
-func NewNode(input string) (Node, error) {
-	node, err := Parse(input)
-	if err != nil {
-		return node, err
-	}
-	node.ID = uuid.NewString()
-
-	return node, nil
-}
-
 func EncodeCSV(s []string) string {
 	return strings.Join(s, ",")
 }
@@ -38,4 +28,8 @@ func DecodeCSV(s string) []string {
 		return nil
 	}
 	return strings.Split(s, ",")
+}
+
+func (n *Node) GenID() {
+	n.ID = uuid.NewString()
 }
