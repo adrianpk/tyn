@@ -1,4 +1,4 @@
-package capture
+package model
 
 type TypeVal string
 
