@@ -17,7 +17,7 @@ func Parse(input string) (Node, error) {
 			item.Tags = append(item.Tags, strings.ToLower(tok[1:]))
 		case strings.HasPrefix(tok, "@") && len(tok) > 1:
 			item.Places = append(item.Places, tok[1:])
-		case strings.HasPrefix(tok, "!") && len(tok) > 1 && item.Status == "":
+		case strings.HasPrefix(tok, ":") && len(tok) > 1 && item.Status == "":
 			item.Status = tok[1:]
 		case strings.HasPrefix(tok, "^") && len(tok) > 1 && item.OverrideDate == nil:
 			t, err := time.Parse("2006-01-02", tok[1:])

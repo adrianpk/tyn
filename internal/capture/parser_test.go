@@ -37,7 +37,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name:         "with status and override date",
-			input:        "meeting !done ^2025-06-20",
+			input:        "meeting :done ^2025-06-20",
 			wantType:     Type.Task,
 			wantContent:  "meeting",
 			wantStatus:   "done",
@@ -84,5 +84,20 @@ func TestParse(t *testing.T) {
 				t.Errorf("Link = %q; want %q", got.Link, tt.wantLink)
 			}
 		})
+	}
+}
+
+func TestParseSpecificCase(t *testing.T) {
+	input := "Finish report :todo #work @office ^2025-06-18"
+	node, err := Parse(input)
+	if err != nil {
+		t.Errorf("Parse() error = %v", err)
+		return
+	}
+	if node.Type != Type.Task {
+		t.Errorf("Parse() type = %v, want %v", node.Type, Type.Task)
+	}
+	if node.Status != "todo" {
+		t.Errorf("Parse() status = %v, want todo", node.Status)
 	}
 }
