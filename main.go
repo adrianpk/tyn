@@ -1,39 +1,34 @@
 package main
 
 import (
-	"bytes"
 	"log"
 	"os"
 
 	"github.com/adrianpk/tyn/internal/capture"
+	"github.com/adrianpk/tyn/internal/list"
 	"github.com/adrianpk/tyn/internal/repo/sqlite"
+	"github.com/adrianpk/tyn/internal/svc"
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	dsn := os.Getenv("TYN_SQLITE_DSN")
-	if dsn == "" {
-		dsn = "tyn.db"
-	}
-
-	r, err := sqlite.NewTynRepo(dsn)
+	r, err := sqlite.NewTynRepo()
 	if err != nil {
 		log.Fatalf("repo db error: %v", err)
 	}
 
-	cmd := capture.NewCommand(r)
+	s := svc.New(r)
 
-	buf := new(bytes.Buffer)
-	cmd.SetOut(buf)
-	cmd.SetErr(buf)
+	rootCmd := &cobra.Command{Use: "tyn"}
+	rootCmd.AddCommand(capture.NewCommand(s))
+	rootCmd.AddCommand(list.NewCommand(s))
 
 	if len(os.Args) > 1 {
-		cmd.SetArgs(os.Args[1:])
+		rootCmd.SetArgs(os.Args[1:])
 	}
 
-	if err := cmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		log.Printf("error: %v", err)
 		return
 	}
-
-	log.Printf("raw output: %s", buf.String())
 }
