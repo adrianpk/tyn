@@ -7,8 +7,11 @@ A simple CLI for capturing, listing, and managing notes, tasks, and links, fast,
 ## Features
 - Capture notes, tasks, and links from the command line
 - List all nodes or filter by type, tag, place, or status
+- Automatic daily journal generation from captured nodes (*)
 - Pretty-printed output for easy inspection
 - More to come
+
+(*) Generated journal files are stored in `~/Documents/tyn/journal/{year}/{month}/YYYYMMDD.md`. This path will be OS-sensitive and eventually configurable.
 
 ## Usage
 
@@ -40,6 +43,16 @@ You can capture a node directly from the command line. Here are some real-world 
 ```
 
 Note: The double quotes in the examples above are used for clarity, but they are not required to capture notes. You can omit them if your input doesn't contain special characters that need escaping in your shell.
+
+The following special symbols are used when capturing nodes to provide additional metadata:
+
+```
+#tag       - Tags your note with a category (e.g., #projectX, #reading)
+@place     - Associates your note with a location (e.g., @home, @office)
+:status    - Sets the status of a task (e.g., :todo, :done, :wip)
+^date      - Overrides the creation date (e.g., ^2025-06-17)
+URL        - Any valid URL is automatically recognized (e.g., https://example.com)
+```
 
 ### List Nodes
 
