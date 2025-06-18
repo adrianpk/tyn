@@ -1,64 +1,112 @@
 package svc
 
 import (
-	"errors"
+	"fmt"
+	"log"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/adrianpk/tyn/internal/model"
 )
 
-const (
-	tagDelim    = "#"
-	placeDelim  = "@"
-	statusDelim = ":"
-	dateDelim   = "^"
-	dateFmt     = "2006-01-02"
-	httpScheme  = "http://"
-	httpsScheme = "https://"
+var (
+	tagPattern    = regexp.MustCompile(`#(\w+)`)
+	placePattern  = regexp.MustCompile(`@(\w+)`)
+	statusPattern = regexp.MustCompile(`:(\w+)`)
+	datePattern   = regexp.MustCompile(`\^([\d\-T:_]+)`)
+	urlPattern    = regexp.MustCompile(`https?://[^\s]+`)
 )
 
 func Parse(input string) (model.Node, error) {
-	item := model.Node{Date: time.Now()}
-	tokens := strings.Fields(input)
-	var content []string
+	log.Printf("Parsing input: %s", input)
 
-	for _, tok := range tokens {
-		switch {
-		case strings.HasPrefix(tok, tagDelim) && len(tok) > 1:
-			item.Tags = append(item.Tags, strings.ToLower(tok[1:]))
+	node := model.Node{
+		Date: time.Now(),
+	}
+	node.GenID()
 
-		case strings.HasPrefix(tok, placeDelim) && len(tok) > 1:
-			item.Places = append(item.Places, tok[1:])
+	urls := urlPattern.FindAllString(input, -1)
+	if len(urls) > 0 {
+		node.Link = urls[0]
+		if strings.TrimSpace(strings.ReplaceAll(input, node.Link, "")) == "" && node.Type == "" {
+			node.Type = model.Type.Link
+		}
+	}
+	input = urlPattern.ReplaceAllString(input, "")
 
-		case strings.HasPrefix(tok, statusDelim) && len(tok) > 1 && item.Status == "":
-			item.Status = tok[1:]
+	tagMatches := tagPattern.FindAllStringSubmatch(input, -1)
+	for _, match := range tagMatches {
+		if len(match) > 1 {
+			node.Tags = append(node.Tags, match[1])
+		}
+	}
+	input = tagPattern.ReplaceAllString(input, "")
 
-		case strings.HasPrefix(tok, dateDelim) && len(tok) > 1 && item.OverrideDate == nil:
-			t, err := time.Parse(dateFmt, tok[1:])
-			if err != nil {
-				return item, errors.New("invalid date format: " + tok[1:])
+	placeMatches := placePattern.FindAllStringSubmatch(input, -1)
+	for _, match := range placeMatches {
+		if len(match) > 1 {
+			node.Places = append(node.Places, match[1])
+		}
+	}
+	input = placePattern.ReplaceAllString(input, "")
+
+	statusMatch := statusPattern.FindStringSubmatch(input)
+	if len(statusMatch) > 1 {
+		node.Status = statusMatch[1]
+		if node.Type == "" {
+			node.Type = model.Type.Task
+		}
+	}
+	input = statusPattern.ReplaceAllString(input, "")
+
+	dateMatch := datePattern.FindStringSubmatch(input)
+	if len(dateMatch) > 1 {
+		dateStr := strings.TrimSpace(dateMatch[1])
+		log.Printf("Captured date string: %s", dateStr)
+
+		var dueDate time.Time
+		var err error
+
+		formats := []string{
+			"2006-01-02-15-04-05", // Format with all hyphens (from makefile)
+			"2006-01-02T15:04:05", // ISO8601
+			"2006-01-02_15:04:05", // Underscore format
+			"2006-01-02 15:04:05", // Space format
+			"2006-01-02",          // Date only
+		}
+
+		parsed := false
+		for _, format := range formats {
+			dueDate, err = time.ParseInLocation(format, dateStr, time.Local)
+			if err == nil {
+				parsed = true
+				break
 			}
-			item.OverrideDate = &t
+		}
 
-		case (strings.HasPrefix(tok, httpScheme) || strings.HasPrefix(tok, httpsScheme)) && item.Link == "":
-			item.Link = tok
+		if !parsed {
+			log.Printf("Failed to parse date with any format: %s", dateStr)
+			return model.Node{}, fmt.Errorf("invalid due date format: unable to parse %s", dateStr)
+		}
 
-		default:
-			content = append(content, tok)
+		log.Printf("Parsed due date (in local timezone): %v", dueDate)
+		node.DueDate = &dueDate
+		log.Printf("Set node.DueDate = %v", *node.DueDate)
+	}
+	input = datePattern.ReplaceAllString(input, "")
+
+	node.Content = strings.TrimSpace(input)
+
+	if node.Type == "" {
+		if node.Status != "" {
+			node.Type = model.Type.Task
+		} else if node.Link != "" {
+			node.Type = model.Type.Link
+		} else {
+			node.Type = model.Type.Note
 		}
 	}
 
-	item.Content = strings.Join(content, " ")
-
-	switch {
-	case item.Status != "":
-		item.Type = model.Type.Task
-	case item.Link != "":
-		item.Type = model.Type.Link
-	default:
-		item.Type = model.Type.Note
-	}
-
-	return item, nil
+	return node, nil
 }

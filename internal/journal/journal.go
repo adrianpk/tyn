@@ -10,43 +10,32 @@ import (
 )
 
 const (
-	// JournalInterval is the interval between journal updates in minutes (hardcoded for now)
 	JournalInterval = 1 * time.Minute
-
-	// JournalBasePath is the base directory for journal files (hardcoded for now)
 	JournalBasePath = "~/Documents/tyn/journal"
 )
 
-// Generator is the journal generator service
 type Generator struct {
 	repo JournalRepo
 }
 
-// JournalRepo defines the repository interface needed by the journal generator
 type JournalRepo interface {
-	// GetNodesByDay returns all nodes created on a specific day
 	GetNodesByDay(day time.Time) ([]model.Node, error)
 }
 
-// New creates a new journal generator
 func New(repo JournalRepo) *Generator {
 	return &Generator{
 		repo: repo,
 	}
 }
 
-// GenerateDaily generates the daily journal for the current day
 func (g *Generator) GenerateDaily() error {
-	// Use current day for journal generation
 	today := time.Now()
 
-	// Get nodes for today
 	nodes, err := g.repo.GetNodesByDay(today)
 	if err != nil {
 		return fmt.Errorf("error fetching today's nodes: %w", err)
 	}
 
-	// Organize nodes by type
 	tasks := []model.Node{}
 	notes := []model.Node{}
 	links := []model.Node{}

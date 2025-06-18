@@ -135,8 +135,15 @@ func matchesFilters(node model.Node, filterType, tagFilter, placeFilter, statusF
 }
 
 func printNode(node model.Node) string {
+	dueDateStr := "nil"
+	if node.DueDate != nil {
+		dueDateStr = node.DueDate.Format("2006-01-02 15:04:05 -0700 MST")
+	}
+
+	dateStr := node.Date.Format("2006-01-02 15:04:05 -0700 MST")
+
 	return fmt.Sprintf(
-		"ID: %s\nType: %s\nContent: %s\nTags: %v\nPlaces: %v\nStatus: %s\nLink: %s\nDate: %s\nOverrideDate: %v\n",
+		"ID: %s\nType: %s\nContent: %s\nTags: %v\nPlaces: %v\nStatus: %s\nLink: %s\nDate: %s\nDueDate: %s\n",
 		node.ID,
 		node.Type,
 		node.Content,
@@ -144,7 +151,7 @@ func printNode(node model.Node) string {
 		node.Places,
 		node.Status,
 		node.Link,
-		node.Date.Format("2006-01-02 15:04:05"),
-		node.OverrideDate,
+		dateStr,
+		dueDateStr,
 	)
 }

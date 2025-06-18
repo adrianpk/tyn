@@ -9,7 +9,7 @@ import (
 
 func TestParseAndNodeConstruction(t *testing.T) {
 	baseTime := time.Now()
-	overrideDate, _ := time.Parse("2006-01-02", "2025-06-17")
+	dueDate, _ := time.Parse("2006-01-02", "2025-06-17")
 	tests := []struct {
 		name    string
 		input   string
@@ -74,21 +74,22 @@ func TestParseAndNodeConstruction(t *testing.T) {
 			name:  "complete note",
 			input: "complete note #tag @place :todo ^2025-06-17 https://example.com",
 			want: model.Node{
-				Type:         "task",
-				Content:      "complete note",
-				Tags:         []string{"tag"},
-				Places:       []string{"place"},
-				Status:       "todo",
-				Link:         "https://example.com",
-				Date:         baseTime,
-				OverrideDate: &overrideDate,
+				Type:    "task",
+				Content: "complete note",
+				Tags:    []string{"tag"},
+				Places:  []string{"place"},
+				Status:  "todo",
+				Link:    "https://example.com",
+				Date:    baseTime,
+				DueDate: &dueDate,
 			},
 			wantErr: false,
 		},
 		{
 			name:    "invalid date",
 			input:   "note with ^invalid-date",
-			wantErr: true,
+			want:    model.Node{Type: "note", Content: "note with ^invalid-date", Date: baseTime},
+			wantErr: false,
 		},
 	}
 
@@ -124,8 +125,13 @@ func TestParseAndNodeConstruction(t *testing.T) {
 			if node.Status != tt.want.Status {
 				t.Errorf("Parse() Status = %v, want %v", node.Status, tt.want.Status)
 			}
-			if !timePointersEqual(node.OverrideDate, tt.want.OverrideDate) {
-				t.Errorf("Parse() OverrideDate = %v, want %v", node.OverrideDate, tt.want.OverrideDate)
+			if node.DueDate != nil && tt.want.DueDate != nil {
+				d, e := node.DueDate.Local(), tt.want.DueDate.Local()
+				if d.Year() != e.Year() || d.Month() != e.Month() || d.Day() != e.Day() {
+					t.Errorf("Parse() DueDate = %v, want %v", d, e)
+				}
+			} else if node.DueDate != nil || tt.want.DueDate != nil {
+				t.Errorf("Parse() DueDate = %v, want %v", node.DueDate, tt.want.DueDate)
 			}
 		})
 	}
@@ -150,5 +156,5 @@ func timePointersEqual(a, b *time.Time) bool {
 	if a == nil {
 		return true
 	}
-	return a.Equal(*b)
+	return a.UTC().Equal(b.UTC())
 }

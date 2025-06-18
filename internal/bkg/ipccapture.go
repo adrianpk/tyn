@@ -5,12 +5,10 @@ import (
 	"fmt"
 )
 
-// CaptureParams represents parameters for the capture command
 type CaptureParams struct {
 	Text string `json:"text"`
 }
 
-// handleCapture processes a capture command
 func (s *Service) handleCapture(params json.RawMessage) Response {
 	var p CaptureParams
 	err := json.Unmarshal(params, &p)

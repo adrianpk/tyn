@@ -7,15 +7,15 @@ import (
 )
 
 type Node struct {
-	ID           string
-	Type         string
-	Content      string
-	Link         string
-	Tags         []string
-	Places       []string
-	Status       string
-	Date         time.Time
-	OverrideDate *time.Time
+	ID      string
+	Type    string
+	Content string
+	Link    string
+	Tags    []string
+	Places  []string
+	Status  string
+	Date    time.Time
+	DueDate *time.Time
 }
 
 func (n *Node) GenID() {
