@@ -20,6 +20,7 @@ var Query = map[string]string{
 		times_notified INTEGER DEFAULT 1,
 		FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE
 	);`,
+
 	// Node queries
 	"create": `INSERT INTO nodes (id, type, content, link, tags, places, status, date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"get":    `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id = ?`,
@@ -27,7 +28,11 @@ var Query = map[string]string{
 	"delete": `DELETE FROM nodes WHERE id = ?`,
 	"list":   `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes`,
 	"list_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
-		WHERE substr(date, 1, 10) = ?`,
+		WHERE date(date, 'localtime') = date(?, 'localtime')`,
+	"list_notes_and_links_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
+		WHERE (type = 'note' OR type = 'link') AND date(date, 'localtime') = date(?, 'localtime')`,
+	"list_all_tasks": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes
+		WHERE type = 'task' ORDER BY date`,
 
 	// Notification queries
 	"create_notification": `INSERT INTO notifications (id, node_id, notification_type, last_notified_at, times_notified) 

@@ -120,10 +120,12 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 	return nodes, nil
 }
 
+// GetNodesByDay retrieves all nodes created on a specific day
 func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 	ctx := context.Background()
 
 	dateStr := day.Format("2006-01-02")
+	log.Printf("GetNodesByDay - Looking for date: %s", dateStr)
 
 	rows, err := r.db.QueryContext(ctx, Query["list_by_day"], dateStr)
 	if err != nil {
@@ -162,11 +164,55 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 		nodes = append(nodes, node)
 	}
 
-	err = rows.Err()
+	log.Printf("GetNodesByDay - Found %d nodes for date %s", len(nodes), dateStr)
+	return nodes, nil
+}
+
+// GetNotesAndLinksByDay retrieves notes and links created on a specific day
+func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
+	ctx := context.Background()
+
+	dateStr := day.Format("2006-01-02")
+	log.Printf("GetNotesAndLinksByDay - Looking for date: %s", dateStr)
+
+	rows, err := r.db.QueryContext(ctx, Query["list_notes_and_links_by_day"], dateStr)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
+	var nodes []model.Node
+	for rows.Next() {
+		var node model.Node
+		var tags, places string
+		var dueDate sql.NullTime
+
+		err := rows.Scan(
+			&node.ID,
+			&node.Type,
+			&node.Content,
+			&node.Link,
+			&tags,
+			&places,
+			&node.Status,
+			&node.Date,
+			&dueDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		node.Tags = csvToStringSlice(tags)
+		node.Places = csvToStringSlice(places)
+		if dueDate.Valid {
+			localTime := dueDate.Time.In(time.Local)
+			node.DueDate = &localTime
+		}
+
+		nodes = append(nodes, node)
+	}
+
+	log.Printf("GetNotesAndLinksByDay - Found %d notes and links for date %s", len(nodes), dateStr)
 	return nodes, nil
 }
 
@@ -312,6 +358,57 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 	}
 
 	return nodes, nil
+}
+
+// GetAllTasks retrieves all tasks from the database ordered by creation date
+func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	rows, err := r.db.QueryContext(ctx, Query["list_all_tasks"])
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []model.Node
+	for rows.Next() {
+		var task model.Node
+		var tags, places string
+		var dueDate sql.NullTime
+
+		err := rows.Scan(
+			&task.ID,
+			&task.Type,
+			&task.Content,
+			&task.Link,
+			&tags,
+			&places,
+			&task.Status,
+			&task.Date,
+			&dueDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		task.Tags = csvToStringSlice(tags)
+		task.Places = csvToStringSlice(places)
+		if dueDate.Valid {
+			localTime := dueDate.Time.In(time.Local)
+			task.DueDate = &localTime
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
 
 func stringSliceToCSV(s []string) string {

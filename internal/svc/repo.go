@@ -16,6 +16,8 @@ type Repo interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context) ([]model.Node, error)
 	GetNodesByDay(day time.Time) ([]model.Node, error)
+	GetAllTasks(ctx context.Context) ([]model.Node, error)
+	GetOverdueTasks(ctx context.Context, notificationType string) ([]model.Node, error)
 	// Notification
 	CreateNotification(ctx context.Context, notification model.Notification) error
 	GetNotification(ctx context.Context, id string) (model.Notification, error)
@@ -24,5 +26,4 @@ type Repo interface {
 	DeleteNotification(ctx context.Context, id string) error
 	DeleteNotificationByNode(ctx context.Context, nodeID string) error
 	ListNotifications(ctx context.Context) ([]model.Notification, error)
-	GetOverdueTasks(ctx context.Context, notificationType string) ([]model.Node, error)
 }

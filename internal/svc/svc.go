@@ -159,3 +159,8 @@ func (s *Svc) NotifyOverdueTask(ctx context.Context, nodeID string) (bool, error
 func (s *Svc) GetNotificationByNodeAndType(ctx context.Context, nodeID, notificationType string) (model.Notification, error) {
 	return s.Repo.GetNotificationByNodeAndType(ctx, nodeID, notificationType)
 }
+
+// GetAllTasks retrieves all tasks from the repository regardless of their creation date
+func (s *Svc) GetAllTasks(ctx context.Context) ([]model.Node, error) {
+	return s.Repo.GetAllTasks(ctx)
+}

@@ -62,6 +62,15 @@ func ServeLoop(isDaemon bool) {
 
 	log.Println("IPC server started successfully")
 
+	log.Println("Initial journal generation on startup...")
+	err = service.journalGenerator.GenerateDaily()
+	if err != nil {
+		log.Printf("Error generating initial journal: %v\n", err)
+	} else {
+		log.Println("Initial journal generated successfully")
+		service.lastJournalGen = time.Now()
+	}
+
 	for {
 		err = service.processPendingNodes()
 		if err != nil {
