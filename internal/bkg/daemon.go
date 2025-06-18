@@ -18,7 +18,7 @@ const (
 func EnsureDaemon() error {
 	running, err := IsDaemonRunning()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not check if daemon is running: %v\n", err)
+		fmt.Fprintf(os.Stderr, "could not check if daemon is running: %v\n", err)
 	}
 
 	if running {
@@ -35,7 +35,7 @@ func EnsureDaemon() error {
 }
 
 func IsDaemonRunning() (bool, error) {
-	pidFile, err := getPidFilePath()
+	pidFile, err := pidFilePath()
 	if err != nil {
 		return false, err
 	}
@@ -78,7 +78,7 @@ func StartDetachedDaemon() (int, error) {
 		return 0, fmt.Errorf("error getting executable path: %w", err)
 	}
 
-	logFile, err := getLogFilePath()
+	logFile, err := logFilePath()
 	if err != nil {
 		return 0, err
 	}
@@ -127,7 +127,7 @@ func StartDetachedDaemon() (int, error) {
 	return pid, nil
 }
 
-func getPidFilePath() (string, error) {
+func pidFilePath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("error getting user home directory: %w", err)
@@ -135,7 +135,7 @@ func getPidFilePath() (string, error) {
 	return filepath.Join(home, DaemonPIDFile), nil
 }
 
-func getLogFilePath() (string, error) {
+func logFilePath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("error getting user home directory: %w", err)
@@ -144,7 +144,7 @@ func getLogFilePath() (string, error) {
 }
 
 func writePidFile(pid int) error {
-	pidFile, err := getPidFilePath()
+	pidFile, err := pidFilePath()
 	if err != nil {
 		return err
 	}

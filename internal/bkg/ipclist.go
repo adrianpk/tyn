@@ -7,7 +7,6 @@ import (
 	"github.com/adrianpk/tyn/internal/model"
 )
 
-// ListParams represents parameters for the list command
 type ListParams struct {
 	Type   string   `json:"type,omitempty"`
 	Tags   []string `json:"tags,omitempty"`
@@ -15,7 +14,6 @@ type ListParams struct {
 	Status string   `json:"status,omitempty"`
 }
 
-// handleList processes a list command
 func (s *Service) handleList(params json.RawMessage) Response {
 	var p ListParams
 	err := json.Unmarshal(params, &p)

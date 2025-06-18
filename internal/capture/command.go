@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/adrianpk/tyn/internal/bkg"
 	"github.com/adrianpk/tyn/internal/model"
@@ -62,6 +63,13 @@ func NewCommand(svc *svc.Svc) *cobra.Command {
 			}
 
 			log.Printf("Captured node via daemon: %s", node.ID)
+
+			// Convert DueDate to local timezone before logging
+			if node.DueDate != nil {
+				localDueDate := node.DueDate.In(time.Local)
+				node.DueDate = &localDueDate
+			}
+
 			log.Printf("%+v", node)
 			return nil
 		},
