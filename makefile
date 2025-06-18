@@ -35,11 +35,20 @@ list:
 	bin/tn list
 
 demo:
-	bin/tn capture "This is a simple note."
-	bin/tn capture "Note with #tag1 #tag2 @home @office"
-	bin/tn capture "A task :todo"
-	bin/tn capture "A task with override date :done ^2025-06-20"
-	bin/tn capture "A useful link https://example.com"
+	@echo "Creating a realistic set of notes, tasks, and links..."
+	bin/tn capture "Sync with Alice and Bob #projectx :done ^2025-06-17 Discussed Q3 roadmap https://company.com/roadmap"
+	bin/tn capture "Write project summary :todo #writing @home Due by end of week"
+	bin/tn capture "Read about Go generics https://go.dev/doc/tutorial/generics #reading #golang"
+	bin/tn capture "Coffee with Carol #networking @cafe Great conversation about potential collaboration"
+	bin/tn capture "Submit tax report :done ^2025-04-15 #finance @office Filed electronically"
+	bin/tn capture "Research cloud providers #infrastructure :wip Comparing AWS, GCP and Azure pricing models"
+	bin/tn capture "Weekly team meeting notes #internal Team discussed sprint goals and blockers"
+	bin/tn capture "Schedule dentist appointment :todo ^2025-06-20 #health @personal"
+	bin/tn capture "Review pull request #23 :todo #coding https://github.com/user/repo/pull/23"
+	bin/tn capture "Design database schema :done #projectX @home Finalized user and product tables"
+	bin/tn capture "Interesting article on CLI tools https://dev.to/cli-tools #reading Bookmark for weekend"
+	bin/tn capture "Order new laptop :wip #shopping @online Looking at developer-focused models"
+	@echo "Demo data created successfully. Run 'bin/tn list' to see results."
 
 test-notification:
 	@echo "Creating task with due date in 2 minutes..."
