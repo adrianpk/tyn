@@ -17,4 +17,6 @@ var Query = map[string]string{
 	"update": `UPDATE nodes SET type=?, content=?, link=?, tags=?, places=?, status=?, date=?, override_date=? WHERE id=?`,
 	"delete": `DELETE FROM nodes WHERE id = ?`,
 	"list":   `SELECT id, type, content, link, tags, places, status, date, override_date FROM nodes`,
+	"list_by_day": `SELECT id, type, content, link, tags, places, status, date, override_date FROM nodes 
+		WHERE substr(date, 1, 10) = ?`,
 }

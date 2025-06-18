@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/adrianpk/tyn/internal/model"
 	_ "modernc.org/sqlite"
@@ -40,7 +41,8 @@ func (r *TynRepo) Get(ctx context.Context, id string) (model.Node, error) {
 	var node model.Node
 	var tags, places string
 	var overrideDate sql.NullTime
-	if err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &overrideDate); err != nil {
+	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &overrideDate)
+	if err != nil {
 		return node, err
 	}
 	node.Tags = csvToStringSlice(tags)
@@ -76,7 +78,8 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 		var node model.Node
 		var tags, places string
 		var overrideDate sql.NullTime
-		if err := rows.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &overrideDate); err != nil {
+		err := rows.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &overrideDate)
+		if err != nil {
 			return nil, err
 		}
 		node.Tags = csvToStringSlice(tags)
@@ -86,6 +89,61 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 		}
 		nodes = append(nodes, node)
 	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return nodes, nil
+}
+
+func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
+	ctx := context.Background()
+
+	dateStr := day.Format("2006-01-02")
+
+	rows, err := r.db.QueryContext(ctx, Query["list_by_day"], dateStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var nodes []model.Node
+	for rows.Next() {
+		var node model.Node
+		var tags, places string
+		var overrideDate sql.NullTime
+
+		err := rows.Scan(
+			&node.ID,
+			&node.Type,
+			&node.Content,
+			&node.Link,
+			&tags,
+			&places,
+			&node.Status,
+			&node.Date,
+			&overrideDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		node.Tags = csvToStringSlice(tags)
+		node.Places = csvToStringSlice(places)
+		if overrideDate.Valid {
+			node.OverrideDate = &overrideDate.Time
+		}
+
+		nodes = append(nodes, node)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return nodes, nil
 }
 

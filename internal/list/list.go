@@ -2,8 +2,11 @@ package list
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/adrianpk/tyn/internal/bkg"
 	"github.com/adrianpk/tyn/internal/model"
 	"github.com/adrianpk/tyn/internal/svc"
 	"github.com/spf13/cobra"
@@ -23,22 +26,63 @@ func NewCommand(svc *svc.Svc) *cobra.Command {
 		Short:   "list all nodes or filter by type (note, task, link), tag, or place",
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			nodes, err := svc.Repo.List(cmd.Context())
-			if err != nil {
-				return err
-			}
+			var nodes []model.Node
+			var err error
 
 			var filterType string
 			if len(args) == 1 {
 				filterType = args[0]
 			}
 
-			// WIP: Printing nodes is of limited utility, but this is just an initial
-			// approach to define the command logic.
-			for _, node := range nodes {
-				if matchesFilters(node, filterType, tagFilter, placeFilter, statusFilter) {
-					fmt.Println(printNode(node))
+			// Direct svc use if available
+			if svc != nil {
+				nodes, err = svc.Repo.List(cmd.Context())
+				if err != nil {
+					return err
 				}
+
+				for _, node := range nodes {
+					if matchesFilters(node, filterType, tagFilter, placeFilter, statusFilter) {
+						fmt.Println(printNode(node))
+					}
+				}
+
+				return nil
+			}
+
+			// IPC Otherwise
+			params := bkg.ListParams{
+				Type: filterType,
+			}
+
+			if tagFilter != "" {
+				params.Tags = strings.Split(tagFilter, ",")
+			}
+
+			if placeFilter != "" {
+				params.Places = strings.Split(placeFilter, ",")
+			}
+
+			if statusFilter != "" {
+				params.Status = statusFilter
+			}
+
+			resp, err := bkg.SendCommand("list", params)
+			if err != nil {
+				return fmt.Errorf("error communicating with daemon: %w", err)
+			}
+
+			if !resp.Success {
+				return fmt.Errorf("daemon returned error: %s", resp.Error)
+			}
+
+			err = json.Unmarshal(resp.Data, &nodes)
+			if err != nil {
+				return fmt.Errorf("error parsing response: %w", err)
+			}
+
+			for _, node := range nodes {
+				fmt.Println(printNode(node))
 			}
 
 			return nil

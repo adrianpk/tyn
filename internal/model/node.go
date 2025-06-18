@@ -21,3 +21,10 @@ type Node struct {
 func (n *Node) GenID() {
 	n.ID = uuid.NewString()
 }
+
+type Filter struct {
+	Type   string
+	Tags   []string
+	Places []string
+	Status string
+}

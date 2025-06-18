@@ -4,31 +4,37 @@ import (
 	"log"
 	"os"
 
-	"github.com/adrianpk/tyn/internal/capture"
-	"github.com/adrianpk/tyn/internal/list"
 	"github.com/adrianpk/tyn/internal/repo/sqlite"
+	"github.com/adrianpk/tyn/internal/root"
 	"github.com/adrianpk/tyn/internal/svc"
-	"github.com/spf13/cobra"
 )
 
 func main() {
-	r, err := sqlite.NewTynRepo()
-	if err != nil {
-		log.Fatalf("repo db error: %v", err)
+	var s *svc.Svc
+
+	hasArgs := len(os.Args) > 1
+
+	if hasArgs && os.Args[1] == "serve" {
+		s = setup()
 	}
 
-	s := svc.New(r)
+	rootCmd := root.NewCommand(s)
 
-	rootCmd := &cobra.Command{Use: "tn"}
-	rootCmd.AddCommand(capture.NewCommand(s))
-	rootCmd.AddCommand(list.NewCommand(s))
-
-	if len(os.Args) > 1 {
+	if hasArgs {
 		rootCmd.SetArgs(os.Args[1:])
 	}
 
-	if err := rootCmd.Execute(); err != nil {
+	err := rootCmd.Execute()
+	if err != nil {
 		log.Printf("error: %v", err)
 		return
 	}
+}
+
+func setup() *svc.Svc {
+	repo, err := sqlite.NewTynRepo()
+	if err != nil {
+		log.Fatalf("repo db error: %v", err)
+	}
+	return svc.New(repo)
 }
