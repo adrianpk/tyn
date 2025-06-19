@@ -115,6 +115,8 @@ func (s *Service) handleMessage(msg Message) Response {
 		return s.handleCapture(msg.Params)
 	case "list":
 		return s.handleList(msg.Params)
+	case "status":
+		return s.handleStatus(msg.Params)
 	default:
 		return Response{
 			Success: false,
