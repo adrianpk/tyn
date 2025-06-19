@@ -16,7 +16,7 @@ import (
 func NewCommand(svc *svc.Svc) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capture",
-		Aliases: []string{"c"},
+		Aliases: []string{"cap", "c"},
 		Short:   "capture a new node",
 		Args:    cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

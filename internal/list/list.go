@@ -22,7 +22,7 @@ func NewCommand(svc *svc.Svc) *cobra.Command {
 	var statusFilter string
 	cmd := &cobra.Command{
 		Use:     "list",
-		Aliases: []string{"ls"},
+		Aliases: []string{"ls", "l"},
 		Short:   "list all nodes or filter by type (note, task, link), tag, or place",
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

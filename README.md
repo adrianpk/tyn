@@ -47,6 +47,8 @@ You can capture a node directly from the command line. Here are some real-world 
 
 Note: The double quotes in the examples above are used for clarity, but they are not required to capture notes. You can omit them if your input doesn't contain special characters that need escaping in your shell.
 
+For convenience, the `capture` command can also be invoked using the shorter aliases `cap` or `c` (e.g., `tn cap`, `tn c`).
+
 The following special symbols are used when capturing nodes to provide additional metadata:
 
 ```
@@ -82,6 +84,8 @@ List only tasks at a place with a status:
 ```
 tn list task --place home --status todo
 ```
+
+For convenience, the `list` command can also be invoked using the shorter aliases `ls` or `l` (e.g., `tn ls`, `tn l`).
 
 ## WIP
 This project is a work in progress. Output formatting and features are basic and intended as a starting point for further development.
