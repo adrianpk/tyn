@@ -64,7 +64,7 @@ type statusVal struct {
 var Status = statusVal{
 	Todo:       "todo",
 	Ready:      "ready",
-	InProgress: "in-progress",
+	InProgress: "wips",
 	Blocked:    "blocked",
 	OnHold:     "on-hold",
 	Review:     "review",

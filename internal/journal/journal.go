@@ -119,6 +119,22 @@ func genMarkdownContent(day time.Time, tasks, notes, links []model.Node) string 
 				}
 
 				taskLine := fmt.Sprintf("- [%s] %s", checkMark, task.Content)
+
+				if task.IsOverdue() {
+					taskLine += " ⌛️"
+				}
+
+				// Agregar tags usando backticks al final de la línea
+				if len(task.Tags) > 0 {
+					taskLine += " "
+					for i, tag := range task.Tags {
+						taskLine += fmt.Sprintf("`#%s`", tag)
+						if i < len(task.Tags)-1 {
+							taskLine += " "
+						}
+					}
+				}
+
 				tasksSection += taskLine + "\n"
 			}
 			tasksSection += "\n"

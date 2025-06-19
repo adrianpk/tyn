@@ -13,7 +13,7 @@ import (
 var (
 	tagPattern    = regexp.MustCompile(`#(\w+)`)
 	placePattern  = regexp.MustCompile(`@(\w+)`)
-	statusPattern = regexp.MustCompile(`:(\w+)`)
+	statusPattern = regexp.MustCompile(`:([a-zA-Z0-9-]+)`)
 	datePattern   = regexp.MustCompile(`\^([\d\-T:_]+)`)
 	urlPattern    = regexp.MustCompile(`https?://[^\s]+`)
 )
@@ -69,11 +69,11 @@ func Parse(input string) (model.Node, error) {
 		var err error
 
 		formats := []string{
-			"2006-01-02-15-04-05", // Format with all hyphens (from makefile)
-			"2006-01-02T15:04:05", // ISO8601
-			"2006-01-02_15:04:05", // Underscore format
-			"2006-01-02 15:04:05", // Space format
-			"2006-01-02",          // Date only
+			"2006-01-02-15-04-05",
+			"2006-01-02T15:04:05",
+			"2006-01-02_15:04:05",
+			"2006-01-02 15:04:05",
+			"2006-01-02",
 		}
 
 		parsed := false
