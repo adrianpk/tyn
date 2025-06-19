@@ -64,7 +64,7 @@ type statusVal struct {
 var Status = statusVal{
 	Todo:       "todo",
 	Ready:      "ready",
-	InProgress: "wips",
+	InProgress: "wip",
 	Blocked:    "blocked",
 	OnHold:     "on-hold",
 	Review:     "review",
@@ -132,6 +132,15 @@ var StatusCycle = []string{
 	Status.Done,
 	Status.Canceled,
 	Status.Waiting,
+}
+
+func ValidStatus(status string) bool {
+	for _, s := range StatusCycle {
+		if s == status {
+			return true
+		}
+	}
+	return false
 }
 
 func NextStatus(currentStatus string) string {

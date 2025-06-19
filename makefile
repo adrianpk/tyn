@@ -46,14 +46,14 @@ demo:
 	bin/tn capture "Read about Go generics https://go.dev/doc/tutorial/generics #reading #golang ^$$today_date"; \
 	bin/tn capture "Coffee with Carol #networking @cafe Great conversation about potential collaboration ^$$today_date"; \
 	bin/tn capture "Submit tax report :done ^2025-04-15 #finance @office Filed electronically"; \
-	bin/tn capture "Research cloud providers #infrastructure :wips Comparing AWS, GCP and Azure pricing models"; \
+	bin/tn capture "Research cloud providers #infrastructure :wip Comparing AWS, GCP and Azure pricing models"; \
 	bin/tn capture "Weekly team meeting notes #internal Team discussed sprint goals and blockers ^$$today_date"; \
 	bin/tn capture "Schedule dentist appointment :todo ^2025-06-20 #health @personal"; \
 	bin/tn capture "Review pull request #23 :todo #coding https://github.com/user/repo/pull/23"; \
 	bin/tn capture "Design database schema :done #projectX @home Finalized user and product tables"; \
 	bin/tn capture "Interesting article on CLI tools https://dev.to/cli-tools #reading Bookmark for weekend ^$$today_date"; \
-	bin/tn capture "Order new laptop :wips #shopping @online Looking at developer-focused models"; \
-	bin/tn capture "Fix critical bug #urgent :wips ^2025-06-10 Need to fix memory leak issue for release"
+	bin/tn capture "Order new laptop :wip #shopping @online Looking at developer-focused models"; \
+	bin/tn capture "Fix critical bug #urgent :wip ^2025-06-10 Need to fix memory leak issue for release"
 	@echo "Demo data created successfully. Run 'bin/tn list' to see results."
 
 test-notification:

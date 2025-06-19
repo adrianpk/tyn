@@ -59,33 +59,132 @@ The following special symbols are used when capturing nodes to provide additiona
 URL        - Any valid URL is automatically recognized (e.g., https://example.com)
 ```
 
+### Managing Tasks
+
+Tyn provides specialized commands to manage tasks with more efficiency:
+
+```
+tn tasks            # List all tasks (shorthand for 'tn tasks list')
+tn tasks list       # List all tasks explicitly
+tn tasks list :todo # List tasks with todo status
+tn tasks list #urgent # List tasks with urgent tag
+tn tasks list @home # List tasks at home location
+```
+
+You can also combine filters:
+
+```
+tn tasks list :wip #urgent      # In-progress urgent tasks
+tn tasks list @office :todo     # Todo tasks at the office
+tn tasks list #project @home    # Project tasks at home
+```
+
+Each task is displayed with a short ID that can be used to reference it in other commands:
+
+```
+ID     STATUS     CONTENT                                            TAGS/PLACES
+--------------------------------------------------------------------------------
+e0e9   [wip]      Fix critical bug    Need to fix memory leak issue  #urgent
+```
+
+To change task status, you can use the following commands:
+
+```
+tn tasks status set e0e9 done   # Set specific status
+tn tasks status next e0e9       # Move to next status in cycle
+tn tasks status prev e0e9       # Move to previous status in cycle
+```
+
+For convenience, these commands can also be used with shorter aliases:
+
+```
+tn t l                # Short for "tn tasks list"
+tn t s next e0e9      # Short for "tn tasks status next e0e9"
+```
+
+Example output of `tn tasks list`:
+
+```
+ID     STATUS     CONTENT                                       TAGS/PLACES          !
+------------------------------------------------------------------------------------------
+5f5c   [done]     Sync with Alice and Bob Discussed Q3 roadmap  #projectx             
+cf41   [todo]     Write project summary Due by end of week      #writing @home        
+5701   [done]     Submit tax report Filed electronically        #finance @office      
+f5bb   [wip]      Research cloud providers Comparing AWS, GC... #infrastructure       
+a5b7   [todo]     Schedule dentist appointment                  #health @personal     
+cdce   [todo]     Review pull request                           #23 #coding           
+e991   [done]     Design database schema Finalized user and ... #projectX @home       
+b3a2   [wip]      Order new laptop Looking at developer-focu... #shopping @online     
+993f   [blocked]  Fix critical bug Need to fix memory leak i... #urgent              ⌛
+```
+
+When changing a task's status with `tn tasks status next`, you'll see:
+
+```
+Task status updated: 'wip' → 'blocked'
+todo → ready → <wip> → [blocked] → on-hold → review → done → canceled → waiting
+```
+
+This visualization shows the status cycle, with:
+- `<wip>` indicating the original status
+- `[blocked]` highlighting the new status
+
+When we executed `tn tasks status next 993f` on the task "Fix critical bug", it moved from 'wip' (work in progress) to 'blocked' status in the cycle. The task is still overdue as indicated by the ⌛ symbol in the list view.
+
+After the command is executed, this task appears as:
+
+```
+993f   [blocked]  Fix critical bug Need to fix memory leak i... #urgent              ⌛
+```
+
+You can also set a specific status directly without cycling through states:
+
+```
+tn tasks status set 993f done
+```
+
+This produces:
+
+```
+Task status updated: 'blocked' → 'done'
+todo → ready → wip → <blocked> → on-hold → review → [done] → canceled → waiting
+```
+
+And the task will appear as:
+
+```
+993f   [done]     Fix critical bug Need to fix memory leak i... #urgent
+```
+
+Note that the overdue indicator (⌛) disappears when a task is marked as done, even if its due date has passed.
+
 ### List Nodes
 
-List all nodes:
+Tyn provides flexible commands for listing and filtering all types of nodes:
 
 ```
-tn list
+tn list               # List all nodes
+tn list task          # List only tasks
+tn list note          # List only notes
+tn list link          # List only links
 ```
 
-List only tasks:
+You can apply various filters with flags:
 
 ```
-tn list task
+tn list --tag projectX      # Filter by tag
+tn list --place home        # Filter by place
+tn list --status todo       # Filter by status (for tasks)
 ```
 
-List only notes with a tag:
+You can also combine node type and filters:
 
 ```
-tn list note --tag projectX
+tn list task --tag projectX --place home   # Tasks with projectX tag at home
+tn list note --tag meeting                 # Meeting notes
 ```
 
-List only tasks at a place with a status:
-
-```
-tn list task --place home --status todo
-```
-
-For convenience, the `list` command can also be invoked using the shorter aliases `ls` or `l` (e.g., `tn ls`, `tn l`).
+For convenience, the `list` command can also be invoked using the shorter aliases `ls` or `l` (e.g., `tn ls`, `tn l task`).
 
 ## WIP
 This project is a work in progress. Output formatting and features are basic and intended as a starting point for further development.

@@ -5,6 +5,7 @@ import (
 	"github.com/adrianpk/tyn/internal/capture"
 	"github.com/adrianpk/tyn/internal/list"
 	"github.com/adrianpk/tyn/internal/svc"
+	"github.com/adrianpk/tyn/internal/tasks"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,7 @@ func NewCommand(s *svc.Svc) *cobra.Command {
 
 	rootCmd.AddCommand(capture.NewCommand(s))
 	rootCmd.AddCommand(list.NewCommand(s))
+	rootCmd.AddCommand(tasks.NewCommand(s))
 	rootCmd.AddCommand(newServeCommand())
 
 	return rootCmd

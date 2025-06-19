@@ -34,6 +34,13 @@ func (n *Node) IsOverdue() bool {
 	return time.Now().After(*n.DueDate)
 }
 
+func (n *Node) ShortID() string {
+	if len(n.ID) < 4 {
+		return n.ID
+	}
+	return n.ID[0:4]
+}
+
 type Filter struct {
 	Type   string
 	Tags   []string
