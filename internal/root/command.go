@@ -2,10 +2,10 @@ package root
 
 import (
 	"github.com/adrianpk/tyn/internal/bkg"
-	"github.com/adrianpk/tyn/internal/capture"
-	"github.com/adrianpk/tyn/internal/list"
+	"github.com/adrianpk/tyn/internal/command/capture"
+	"github.com/adrianpk/tyn/internal/command/list"
+	"github.com/adrianpk/tyn/internal/command/tasks"
 	"github.com/adrianpk/tyn/internal/svc"
-	"github.com/adrianpk/tyn/internal/tasks"
 	"github.com/spf13/cobra"
 )
 
