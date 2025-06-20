@@ -14,13 +14,21 @@ A simple CLI for capturing, listing, and managing notes, tasks, and links, fast,
 
 (*) Generated journal files are stored in `~/Documents/tyn/journal/{year}/{month}/YYYYMMDD.md`. This path will be OS-sensitive and eventually configurable. For a sample of what the generated output looks like, check out our [example journal entry](docs/examples/20250619.md). The system also maintains a [rotating index](docs/examples/index.md) accessible at `~/Documents/tyn/index.md` with links to journal entries.
 
-## Usage
-
-### Build
+## Installation
 
 ```
+go install github.com/adrianpk/tyn@latest
+```
+
+If you prefer to compile and test locally, you can clone the repository and use make:
+
+```
+git clone https://github.com/adrianpk/tyn.git
+cd tyn
 make build
 ```
+
+## Usage
 
 ### Capture a Node
 
