@@ -124,10 +124,12 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 	ctx := context.Background()
 
-	dateStr := day.Format("2006-01-02")
-	log.Printf("GetNodesByDay - Looking for date: %s", dateStr)
+	startLocal := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.Local)
+	endLocal := startLocal.Add(24 * time.Hour)
+	startUTC := startLocal.UTC()
+	endUTC := endLocal.UTC()
 
-	rows, err := r.db.QueryContext(ctx, Query["list_by_day"], dateStr)
+	rows, err := r.db.QueryContext(ctx, Query["list_by_day"], startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +166,7 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 		nodes = append(nodes, node)
 	}
 
-	log.Printf("GetNodesByDay - Found %d nodes for date %s", len(nodes), dateStr)
+	log.Printf("GetNodesByDay - Found %d nodes for date %s", len(nodes), day.Format("2006-01-02"))
 	return nodes, nil
 }
 
@@ -172,10 +174,12 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 	ctx := context.Background()
 
-	dateStr := day.Format("2006-01-02")
-	log.Printf("GetNotesAndLinksByDay - Looking for date: %s", dateStr)
+	startLocal := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.Local)
+	endLocal := startLocal.Add(24 * time.Hour)
+	startUTC := startLocal.UTC()
+	endUTC := endLocal.UTC()
 
-	rows, err := r.db.QueryContext(ctx, Query["list_notes_and_links_by_day"], dateStr)
+	rows, err := r.db.QueryContext(ctx, Query["list_notes_and_links_by_day"], startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +216,7 @@ func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 		nodes = append(nodes, node)
 	}
 
-	log.Printf("GetNotesAndLinksByDay - Found %d notes and links for date %s", len(nodes), dateStr)
+	log.Printf("GetNotesAndLinksByDay - Found %d notes and links for date %s", len(nodes), day.Format("2006-01-02"))
 	return nodes, nil
 }
 
@@ -311,7 +315,14 @@ func (r *TynRepo) ListNotifications(ctx context.Context) ([]model.Notification, 
 func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) ([]model.Node, error) {
 	log.Printf("Executing get_overdue_tasks with notificationType: %s", notificationType)
 	query := Query["get_overdue_tasks"]
-	rows, err := r.db.QueryContext(ctx, query, notificationType)
+
+	now := time.Now()
+	startLocal := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	endLocal := startLocal.Add(24 * time.Hour)
+	startUTC := startLocal.UTC()
+	endUTC := endLocal.UTC()
+
+	rows, err := r.db.QueryContext(ctx, query, notificationType, startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
 		return nil, err

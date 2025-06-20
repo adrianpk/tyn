@@ -28,9 +28,9 @@ var Query = map[string]string{
 	"delete": `DELETE FROM nodes WHERE id = ?`,
 	"list":   `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes`,
 	"list_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
-		WHERE date(date, 'localtime') = date(?, 'localtime')`,
+		WHERE date >= ? AND date < ?`,
 	"list_notes_and_links_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
-		WHERE (type = 'note' OR type = 'link') AND date(date, 'localtime') = date(?, 'localtime')`,
+		WHERE (type = 'note' OR type = 'link') AND date >= ? AND date < ?`,
 	"list_all_tasks": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes
 		WHERE type = 'task' ORDER BY date`,
 
@@ -60,6 +60,6 @@ var Query = map[string]string{
 			SELECT 1 FROM notifications nt
 			WHERE nt.node_id = n.id
 			AND nt.notification_type = ?
-			AND date(nt.last_notified_at) = date('now')
+			AND nt.last_notified_at >= ? AND nt.last_notified_at < ?
 		)`,
 }
