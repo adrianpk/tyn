@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,8 +18,38 @@ type TynRepo struct {
 	db *sqlx.DB
 }
 
+func getDBPath() string {
+	if dbPath := os.Getenv("TYN_DB_PATH"); dbPath != "" {
+		log.Printf("Using database path from environment: %s", dbPath)
+		return dbPath
+	}
+
+	if os.Getenv("TYN_DEV") != "" {
+		log.Printf("Development mode: using local tyn.db")
+		return "tyn.db"
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("Warning: could not get user home directory: %v", err)
+		return "tyn.db"
+	}
+
+	tynDir := filepath.Join(homeDir, ".tyn")
+
+	if err := os.MkdirAll(tynDir, 0755); err != nil {
+		log.Printf("Warning: could not create directory %s: %v", tynDir, err)
+		return "tyn.db"
+	}
+
+	dbPath := filepath.Join(tynDir, "tyn.db")
+	log.Printf("Using database at: %s", dbPath)
+	return dbPath
+}
+
 func NewTynRepo() (*TynRepo, error) {
-	db, err := sqlx.Open("sqlite", "tyn.db")
+	dbPath := getDBPath()
+	db, err := sqlx.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +159,6 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 	return nodes, nil
 }
 
-// GetNodesByDay retrieves all nodes created on a specific day
 func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 	ctx := context.Background()
 
@@ -172,7 +203,6 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 	return nodes, nil
 }
 
-// GetNotesAndLinksByDay retrieves notes and links created on a specific day
 func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 	ctx := context.Background()
 
@@ -307,8 +337,6 @@ func (r *TynRepo) ListNotifications(ctx context.Context) ([]model.Notification, 
 	return notifications, nil
 }
 
-// GetOverdueTasks retrieves tasks with due dates in the past that aren't marked as done
-// and haven't been notified today for the specified notification type
 func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) ([]model.Node, error) {
 	log.Printf("Executing get_overdue_tasks with notificationType: %s", notificationType)
 	query := Query["get_overdue_tasks"]
@@ -362,7 +390,6 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 	return nodes, nil
 }
 
-// GetAllTasks retrieves all tasks from the database ordered by creation date
 func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 	if ctx == nil {
 		ctx = context.Background()

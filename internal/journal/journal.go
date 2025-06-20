@@ -12,8 +12,14 @@ import (
 )
 
 const (
+	// JournalInterval defines how often the journal generation runs
 	JournalInterval = 1 * time.Minute
+	// JournalBasePath is the base path for storing journal files
 	JournalBasePath = "~/Documents/tyn/journal"
+	// TynBasePath is the base path for tyn documents
+	TynBasePath = "~/Documents/tyn"
+	// IndexFileName is the name of the index file
+	IndexFileName = "index.md"
 )
 
 type Generator struct {
@@ -36,7 +42,6 @@ func (g *Generator) GenerateDaily() error {
 	today := time.Now()
 	log.Println("Journal: Starting daily journal generation...")
 
-	// Get all tasks (regardless of date)
 	ctx := context.Background()
 	allTasks, err := g.repo.GetAllTasks(ctx)
 	if err != nil {
@@ -44,7 +49,6 @@ func (g *Generator) GenerateDaily() error {
 	}
 	log.Printf("Journal: Found %d total tasks", len(allTasks))
 
-	// Get today's notes and links
 	notesAndLinks, err := g.repo.GetNotesAndLinksByDay(today)
 	if err != nil {
 		return fmt.Errorf("error fetching today's notes and links: %w", err)
@@ -72,7 +76,131 @@ func (g *Generator) GenerateDaily() error {
 	}
 	log.Printf("Journal: Successfully saved journal to %s", journalPath)
 
+	err = g.UpdateIndex(today)
+	if err != nil {
+		return fmt.Errorf("error updating index: %w", err)
+	}
+
 	return nil
+}
+
+func (g *Generator) UpdateIndex(today time.Time) error {
+	log.Println("Journal: Updating index file...")
+
+	content, err := genIndexContent(today)
+	if err != nil {
+		return fmt.Errorf("error generating index content: %w", err)
+	}
+
+	indexPath, err := saveIndex(content)
+	if err != nil {
+		return fmt.Errorf("error saving index: %w", err)
+	}
+
+	log.Printf("Journal: Successfully updated index at %s", indexPath)
+	return nil
+}
+
+func genIndexContent(today time.Time) (string, error) {
+	content := "# Index\n\n"
+	content += "## Journal\n\n"
+	content += genWeekSummary(today)
+
+	return content, nil
+}
+
+type journalDay struct {
+	day         time.Time
+	exists      bool
+	journalPath string
+}
+
+func genWeekSummary(today time.Time) string {
+	content := ""
+
+	currentWeekday := today.Weekday()
+	daysToSunday := int(currentWeekday)
+	sunday := today.AddDate(0, 0, -daysToSunday)
+
+	days := []journalDay{}
+
+	for i := 0; i < 7; i++ {
+		day := sunday.AddDate(0, 0, i)
+
+		if day.After(today) {
+			continue
+		}
+
+		year := day.Format("2006")
+		month := day.Format("01")
+		journalFileName := day.Format("20060102") + ".md"
+
+		expandedPath := JournalBasePath
+		if len(expandedPath) > 0 && expandedPath[0] == '~' {
+			home, err := os.UserHomeDir()
+			if err == nil {
+				expandedPath = filepath.Join(home, expandedPath[1:])
+			}
+		}
+
+		journalFilePath := filepath.Join(expandedPath, year, month, journalFileName)
+		journalRelPath := filepath.Join("journal", year, month, journalFileName)
+
+		_, err := os.Stat(journalFilePath)
+		exists := err == nil
+
+		days = append(days, journalDay{
+			day:         day,
+			exists:      exists,
+			journalPath: journalRelPath,
+		})
+	}
+
+	for i := len(days) - 1; i >= 0; i-- {
+		day := days[i]
+
+		if !day.exists {
+			continue
+		}
+
+		bullet := "* "
+
+		var dayLabel string
+		if day.day.Format("2006-01-02") == today.Format("2006-01-02") {
+			dayLabel = "Today"
+		} else {
+			dayLabel = day.day.Format("Monday") // Just show the weekday name
+		}
+
+		content += fmt.Sprintf("%s[%s](%s)\n", bullet, dayLabel, day.journalPath)
+	}
+
+	return content
+}
+
+func saveIndex(content string) (string, error) {
+	expandedPath := TynBasePath
+	if len(expandedPath) > 0 && expandedPath[0] == '~' {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("error getting home directory: %w", err)
+		}
+		expandedPath = filepath.Join(home, expandedPath[1:])
+	}
+
+	err := os.MkdirAll(expandedPath, 0755)
+	if err != nil {
+		return "", fmt.Errorf("error creating index directory: %w", err)
+	}
+
+	filePath := filepath.Join(expandedPath, IndexFileName)
+
+	err = os.WriteFile(filePath, []byte(content), 0644)
+	if err != nil {
+		return "", fmt.Errorf("error writing index file: %w", err)
+	}
+
+	return filePath, nil
 }
 
 func genMarkdownContent(day time.Time, tasks, notes, links []model.Node) string {
@@ -124,7 +252,6 @@ func genMarkdownContent(day time.Time, tasks, notes, links []model.Node) string 
 					taskLine += " ⌛️"
 				}
 
-				// Agregar tags usando backticks al final de la línea
 				if len(task.Tags) > 0 {
 					taskLine += " "
 					for i, tag := range task.Tags {
