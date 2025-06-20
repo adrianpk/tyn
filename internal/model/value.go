@@ -1,5 +1,10 @@
 package model
 
+// Common date format constants
+const (
+	DateTimeFormat = "2006-01-02 15:04:05"
+)
+
 type TypeVal string
 type StatusVal string
 

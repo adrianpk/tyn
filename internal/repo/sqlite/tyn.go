@@ -8,15 +8,16 @@ import (
 	"time"
 
 	"github.com/adrianpk/tyn/internal/model"
+	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
 
 type TynRepo struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func NewTynRepo() (*TynRepo, error) {
-	db, err := sql.Open("sqlite", "tyn.db")
+	db, err := sqlx.Open("sqlite", "tyn.db")
 	if err != nil {
 		return nil, err
 	}
@@ -34,27 +35,29 @@ func (r *TynRepo) Create(ctx context.Context, node model.Node) error {
 	var dueDateStr interface{} = nil
 	if node.DueDate != nil {
 		utcDueDate := node.DueDate.UTC()
-		dueDateStr = utcDueDate.Format("2006-01-02 15:04:05")
+		dueDateStr = utcDueDate.Format(model.DateTimeFormat)
 		log.Printf("Repository - Formatted DueDate for DB (UTC): %v", dueDateStr)
 	}
 
 	_, err := r.db.ExecContext(ctx, Query["create"],
 		node.ID, node.Type, node.Content, node.Link,
 		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
-		node.Date.UTC().Format("2006-01-02 15:04:05"), dueDateStr,
+		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr,
 	)
 	return err
 }
 
 func (r *TynRepo) Get(ctx context.Context, id string) (model.Node, error) {
-	row := r.db.QueryRowContext(ctx, Query["get"], id)
 	var node model.Node
 	var tags, places string
 	var dueDate sql.NullTime
+
+	row := r.db.QueryRowContext(ctx, Query["get"], id)
 	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
 	if err != nil {
 		return node, err
 	}
+
 	node.Tags = csvToStringSlice(tags)
 	node.Places = csvToStringSlice(places)
 	if dueDate.Valid {
@@ -68,13 +71,13 @@ func (r *TynRepo) Update(ctx context.Context, node model.Node) error {
 	var dueDateStr interface{} = nil
 	if node.DueDate != nil {
 		utcDueDate := node.DueDate.UTC()
-		dueDateStr = utcDueDate.Format("2006-01-02 15:04:05")
+		dueDateStr = utcDueDate.Format(model.DateTimeFormat)
 	}
 
 	_, err := r.db.ExecContext(ctx, Query["update"],
 		node.Type, node.Content, node.Link,
 		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
-		node.Date.UTC().Format("2006-01-02 15:04:05"), dueDateStr, node.ID,
+		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
 	)
 	return err
 }
@@ -85,35 +88,39 @@ func (r *TynRepo) Delete(ctx context.Context, id string) error {
 }
 
 func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	rows, err := r.db.QueryContext(ctx, Query["list"])
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var nodes []model.Node
 	for rows.Next() {
 		var node model.Node
 		var tags, places string
 		var dueDate sql.NullTime
+
 		err := rows.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Repository - After DB read: Raw dueDate = %v, Valid = %v", dueDate.Time, dueDate.Valid)
-
 		node.Tags = csvToStringSlice(tags)
 		node.Places = csvToStringSlice(places)
+
 		if dueDate.Valid {
 			localTime := dueDate.Time.In(time.Local)
 			node.DueDate = &localTime
-			log.Printf("Repository - After setting pointer: node.DueDate = %v", *node.DueDate)
 		}
+
 		nodes = append(nodes, node)
 	}
 
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -129,7 +136,9 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 	startUTC := startLocal.UTC()
 	endUTC := endLocal.UTC()
 
-	rows, err := r.db.QueryContext(ctx, Query["list_by_day"], startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
+	rows, err := r.db.QueryContext(ctx, Query["list_by_day"],
+		startUTC.Format(model.DateTimeFormat),
+		endUTC.Format(model.DateTimeFormat))
 	if err != nil {
 		return nil, err
 	}
@@ -142,15 +151,8 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 		var dueDate sql.NullTime
 
 		err := rows.Scan(
-			&node.ID,
-			&node.Type,
-			&node.Content,
-			&node.Link,
-			&tags,
-			&places,
-			&node.Status,
-			&node.Date,
-			&dueDate,
+			&node.ID, &node.Type, &node.Content, &node.Link,
+			&tags, &places, &node.Status, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -179,7 +181,9 @@ func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 	startUTC := startLocal.UTC()
 	endUTC := endLocal.UTC()
 
-	rows, err := r.db.QueryContext(ctx, Query["list_notes_and_links_by_day"], startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
+	rows, err := r.db.QueryContext(ctx, Query["list_notes_and_links_by_day"],
+		startUTC.Format(model.DateTimeFormat),
+		endUTC.Format(model.DateTimeFormat))
 	if err != nil {
 		return nil, err
 	}
@@ -192,15 +196,8 @@ func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 		var dueDate sql.NullTime
 
 		err := rows.Scan(
-			&node.ID,
-			&node.Type,
-			&node.Content,
-			&node.Link,
-			&tags,
-			&places,
-			&node.Status,
-			&node.Date,
-			&dueDate,
+			&node.ID, &node.Type, &node.Content, &node.Link,
+			&tags, &places, &node.Status, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -322,7 +319,9 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 	startUTC := startLocal.UTC()
 	endUTC := endLocal.UTC()
 
-	rows, err := r.db.QueryContext(ctx, query, notificationType, startUTC.Format("2006-01-02 15:04:05"), endUTC.Format("2006-01-02 15:04:05"))
+	rows, err := r.db.QueryContext(ctx, query, notificationType,
+		startUTC.Format(model.DateTimeFormat),
+		endUTC.Format(model.DateTimeFormat))
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
 		return nil, err
@@ -336,15 +335,8 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 		var dueDate sql.NullTime
 
 		err := rows.Scan(
-			&node.ID,
-			&node.Type,
-			&node.Content,
-			&node.Link,
-			&tags,
-			&places,
-			&node.Status,
-			&node.Date,
-			&dueDate,
+			&node.ID, &node.Type, &node.Content, &node.Link,
+			&tags, &places, &node.Status, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -363,8 +355,7 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 
 	log.Printf("Found %d overdue tasks", len(nodes))
 
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -390,15 +381,8 @@ func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 		var dueDate sql.NullTime
 
 		err := rows.Scan(
-			&task.ID,
-			&task.Type,
-			&task.Content,
-			&task.Link,
-			&tags,
-			&places,
-			&task.Status,
-			&task.Date,
-			&dueDate,
+			&task.ID, &task.Type, &task.Content, &task.Link,
+			&tags, &places, &task.Status, &task.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -414,8 +398,7 @@ func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 		tasks = append(tasks, task)
 	}
 
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -433,7 +416,7 @@ func csvToStringSlice(s string) []string {
 	return strings.Split(s, ",")
 }
 
-func migrate(db *sql.DB) error {
+func migrate(db *sqlx.DB) error {
 	_, err := db.Exec(Query["create_nodes_table"])
 	if err != nil {
 		return err
