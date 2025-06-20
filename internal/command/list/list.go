@@ -7,93 +7,108 @@ import (
 	"strings"
 
 	"github.com/adrianpk/tyn/internal/bkg"
+	"github.com/adrianpk/tyn/internal/command/common"
 	"github.com/adrianpk/tyn/internal/model"
 	"github.com/adrianpk/tyn/internal/svc"
 	"github.com/spf13/cobra"
 )
 
-type Repo interface {
-	List(ctx context.Context) ([]model.Node, error)
+type ListCommand struct {
+	common.BaseCommand
+	tagFilter    string
+	placeFilter  string
+	statusFilter string
 }
 
 func NewCommand(svc *svc.Svc) *cobra.Command {
-	var tagFilter string
-	var placeFilter string
-	var statusFilter string
-	cmd := &cobra.Command{
+	cmd := &ListCommand{
+		BaseCommand: common.BaseCommand{
+			Svc:         svc,
+			CommandName: "list",
+		},
+	}
+
+	cobraCmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls", "l"},
 		Short:   "list all nodes or filter by type (note, task, link), tag, or place",
 		Args:    cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var nodes []model.Node
-			var err error
-
-			var filterType string
-			if len(args) == 1 {
-				filterType = args[0]
-			}
-
-			// Direct svc use if available
-			if svc != nil {
-				nodes, err = svc.Repo.List(cmd.Context())
-				if err != nil {
-					return err
-				}
-
-				for _, node := range nodes {
-					if matchesFilters(node, filterType, tagFilter, placeFilter, statusFilter) {
-						fmt.Println(printNode(node))
-					}
-				}
-
-				return nil
-			}
-
-			// IPC Otherwise
-			params := bkg.ListParams{
-				Type: filterType,
-			}
-
-			if tagFilter != "" {
-				params.Tags = strings.Split(tagFilter, ",")
-			}
-
-			if placeFilter != "" {
-				params.Places = strings.Split(placeFilter, ",")
-			}
-
-			if statusFilter != "" {
-				params.Status = statusFilter
-			}
-
-			resp, err := bkg.SendCommand("list", params)
-			if err != nil {
-				return fmt.Errorf("error communicating with daemon: %w", err)
-			}
-
-			if !resp.Success {
-				return fmt.Errorf("daemon returned error: %s", resp.Error)
-			}
-
-			err = json.Unmarshal(resp.Data, &nodes)
-			if err != nil {
-				return fmt.Errorf("error parsing response: %w", err)
-			}
-
-			for _, node := range nodes {
-				fmt.Println(printNode(node))
-			}
-
-			return nil
+		RunE: func(cobra *cobra.Command, args []string) error {
+			flags := common.ExtractFlagsFromCommand(cobra)
+			return cmd.Execute(cobra.Context(), args, flags, cmd.ExecuteDirect, cmd.ExecuteViaIPC)
 		},
 	}
 
-	cmd.Flags().StringVarP(&tagFilter, "tag", "t", "", "filter by tag")
-	cmd.Flags().StringVarP(&placeFilter, "place", "p", "", "filter by place")
-	cmd.Flags().StringVarP(&statusFilter, "status", "s", "", "filter by status")
+	cobraCmd.Flags().StringVarP(&cmd.tagFilter, "tag", "t", "", "filter by tag")
+	cobraCmd.Flags().StringVarP(&cmd.placeFilter, "place", "p", "", "filter by place")
+	cobraCmd.Flags().StringVarP(&cmd.statusFilter, "status", "s", "", "filter by status")
 
-	return cmd
+	cmd.CobraCmd = cobraCmd
+	return cobraCmd
+}
+
+func (c *ListCommand) ExecuteDirect(ctx context.Context, args []string, flags map[string]interface{}) error {
+	var filterType string
+	if len(args) == 1 {
+		filterType = args[0]
+	}
+
+	nodes, err := c.Svc.Repo.List(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodes {
+		if matchesFilters(node, filterType, c.tagFilter, c.placeFilter, c.statusFilter) {
+			fmt.Println(printNode(node))
+		}
+	}
+
+	return nil
+}
+
+func (c *ListCommand) ExecuteViaIPC(args []string, flags map[string]interface{}) error {
+	var filterType string
+	if len(args) == 1 {
+		filterType = args[0]
+	}
+
+	params := bkg.ListParams{
+		Type: filterType,
+	}
+
+	if c.tagFilter != "" {
+		params.Tags = strings.Split(c.tagFilter, ",")
+	}
+
+	if c.placeFilter != "" {
+		params.Places = strings.Split(c.placeFilter, ",")
+	}
+
+	if c.statusFilter != "" {
+		params.Status = c.statusFilter
+	}
+
+	resp, err := bkg.SendCommand("list", params)
+	if err != nil {
+		return fmt.Errorf("error communicating with daemon: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("daemon returned error: %s", resp.Error)
+	}
+
+	var nodes []model.Node
+	err = json.Unmarshal(resp.Data, &nodes)
+	if err != nil {
+		return fmt.Errorf("error parsing response: %w", err)
+	}
+
+	for _, node := range nodes {
+		fmt.Println(printNode(node))
+	}
+
+	return nil
 }
 
 func hasTag(node model.Node, tag string) bool {
