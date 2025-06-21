@@ -1,4 +1,4 @@
-.PHONY: all build run run-race test test-race lint format check install-hooks list tasks demo test-notification view-logs clear-logs
+.PHONY: all build run run-race test test-race lint format check install-hooks list tasks demo test-notification view-logs clear-logs update update-places update-due update-tags update-text
 
 APP_NAME = tn
 TYN_DEV = TYN_DEV=1
@@ -37,6 +37,48 @@ list:
 
 tasks:
 	$(TYN_DEV) bin/tn tasks
+
+update-tags:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update-tags ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --tags "projectz,roadmap"
+
+update-place:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update-place ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --places "office,home"
+
+update:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --tags "projectx,roadmap"
+
+update-places:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update-places ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --places "office,home"
+
+update-due:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update-due ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --due 2025-07-01
+
+update-text:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: Task ID is required. Usage: make update-text ID=<task_id>"; \
+		exit 1; \
+	fi
+	$(TYN_DEV) bin/tn tasks update $(ID) --text "Updated task text with new details"
 
 demo:
 	@echo "Creating a realistic set of notes, tasks, and links..."

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -100,6 +101,21 @@ func (r *TynRepo) Get(ctx context.Context, id string) (model.Node, error) {
 }
 
 func (r *TynRepo) Update(ctx context.Context, node model.Node) error {
+	var dueDateStr interface{} = nil
+	if node.DueDate != nil {
+		utcDueDate := node.DueDate.UTC()
+		dueDateStr = utcDueDate.Format(model.DateTimeFormat)
+	}
+
+	_, err := r.db.ExecContext(ctx, Query["update"],
+		node.Type, node.Content, node.Link,
+		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
+		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
+	)
+	return err
+}
+
+func (r *TynRepo) UpdateTask(ctx context.Context, node model.Node) error {
 	var dueDateStr interface{} = nil
 	if node.DueDate != nil {
 		utcDueDate := node.DueDate.UTC()
@@ -430,6 +446,70 @@ func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 	}
 
 	return tasks, nil
+}
+
+func (r *TynRepo) GetTaskByID(ctx context.Context, id string) (model.Node, error) {
+	var node model.Node
+	var tags, places string
+	var dueDate sql.NullTime
+
+	// Try exact match first
+	row := r.db.QueryRowContext(ctx, Query["get"], id)
+	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
+	if err == nil {
+		node.Tags = csvToStringSlice(tags)
+		node.Places = csvToStringSlice(places)
+		if dueDate.Valid {
+			localTime := dueDate.Time.In(time.Local)
+			node.DueDate = &localTime
+		}
+		return node, nil
+	}
+
+	// If exact match fails, try partial match
+	rows, err := r.db.QueryContext(ctx, Query["get_by_partial_id"], id)
+	if err != nil {
+		return model.Node{}, fmt.Errorf("task with ID '%s' not found: %v", id, err)
+	}
+	defer rows.Close()
+
+	var nodes []model.Node
+	for rows.Next() {
+		var n model.Node
+		var t, p string
+		var dd sql.NullTime
+
+		err := rows.Scan(&n.ID, &n.Type, &n.Content, &n.Link, &t, &p, &n.Status, &n.Date, &dd)
+		if err != nil {
+			return model.Node{}, fmt.Errorf("error scanning task: %v", err)
+		}
+
+		n.Tags = csvToStringSlice(t)
+		n.Places = csvToStringSlice(p)
+		if dd.Valid {
+			localTime := dd.Time.In(time.Local)
+			n.DueDate = &localTime
+		}
+
+		nodes = append(nodes, n)
+	}
+
+	if len(nodes) == 0 {
+		return model.Node{}, fmt.Errorf("task with ID '%s' not found", id)
+	}
+
+	if len(nodes) > 1 {
+		// If multiple matches, look for an exact prefix match
+		for _, n := range nodes {
+			if strings.HasPrefix(n.ID, id) {
+				return n, nil
+			}
+		}
+		// Otherwise return the first match
+		log.Printf("Warning: Multiple tasks found with ID prefix '%s', using first match", id)
+	}
+
+	return nodes[0], nil
 }
 
 func stringSliceToCSV(s []string) string {

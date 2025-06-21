@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/adrianpk/tyn/internal/model"
@@ -163,4 +164,38 @@ func (s *Svc) GetNotificationByNodeAndType(ctx context.Context, nodeID, notifica
 // GetAllTasks retrieves all tasks from the repository regardless of their creation date
 func (s *Svc) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 	return s.Repo.GetAllTasks(ctx)
+}
+
+func (s *Svc) UpdateTask(ctx context.Context, id string, tags, places []string, dueDate string, text string) error {
+	task, err := s.Repo.GetTaskByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("error retrieving task: %w", err)
+	}
+
+	if tags != nil {
+		task.Tags = tags
+	}
+
+	if places != nil {
+		task.Places = places
+	}
+
+	if dueDate != "" {
+		date, err := time.Parse("2006-01-02", dueDate)
+		if err != nil {
+			return fmt.Errorf("invalid due date format: %w", err)
+		}
+		task.DueDate = &date
+	}
+
+	if text != "" {
+		task.Content = text
+	}
+
+	err = s.Repo.UpdateTask(ctx, task)
+	if err != nil {
+		return fmt.Errorf("error updating task: %w", err)
+	}
+
+	return nil
 }

@@ -22,11 +22,12 @@ var Query = map[string]string{
 	);`,
 
 	// Node queries
-	"create": `INSERT INTO nodes (id, type, content, link, tags, places, status, date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"get":    `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id = ?`,
-	"update": `UPDATE nodes SET type=?, content=?, link=?, tags=?, places=?, status=?, date=?, due_date=? WHERE id=?`,
-	"delete": `DELETE FROM nodes WHERE id = ?`,
-	"list":   `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes`,
+	"create":            `INSERT INTO nodes (id, type, content, link, tags, places, status, date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"get":               `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id = ?`,
+	"get_by_partial_id": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id LIKE ? || '%'`,
+	"update":            `UPDATE nodes SET type=?, content=?, link=?, tags=?, places=?, status=?, date=?, due_date=? WHERE id=?`,
+	"delete":            `DELETE FROM nodes WHERE id = ?`,
+	"list":              `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes`,
 	"list_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
 		WHERE date >= ? AND date < ?`,
 	"list_notes_and_links_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 

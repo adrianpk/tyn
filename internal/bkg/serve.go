@@ -2,6 +2,7 @@ package bkg
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,6 @@ type Service struct {
 	notifiedTaskIDs       map[string]bool
 }
 
-// ServeLoop is the main daemon loop that processes pending nodes
 func ServeLoop(isDaemon bool) {
 	if isDaemon {
 		logFile, err := logFilePath()
@@ -100,10 +100,6 @@ func ServeLoop(isDaemon bool) {
 func (s *Service) processPendingNodes() error {
 	log.Println("Checking for pending nodes...")
 
-	// WIP: implement the actual processing logic:
-	// * Query the database for pending nodes
-	// * Process them
-
 	return nil
 }
 
@@ -117,6 +113,14 @@ func (s *Service) handleMessage(msg Message) Response {
 		return s.handleList(msg.Params)
 	case "status":
 		return s.handleStatus(msg.Params)
+	case "update":
+		return s.handleUpdate(msg.Params)
+	case "tag":
+		return s.handleTag(msg.Params)
+	case "place":
+		return s.handlePlace(msg.Params)
+	case "date":
+		return s.handleDate(msg.Params)
 	default:
 		return Response{
 			Success: false,
@@ -125,9 +129,31 @@ func (s *Service) handleMessage(msg Message) Response {
 	}
 }
 
-// checkOverdueTasks checks for tasks with past due dates and sends notifications
+func (s *Service) handleUpdate(params json.RawMessage) Response {
+	var updateParams UpdateParams
+	err := json.Unmarshal(params, &updateParams)
+	if err != nil {
+		return Response{
+			Success: false,
+			Error:   fmt.Sprintf("error unmarshaling update params: %v", err),
+		}
+	}
+
+	ctx := context.Background()
+	err = s.svc.UpdateTask(ctx, updateParams.ID, updateParams.Tags, updateParams.Places, updateParams.Due, updateParams.Text)
+	if err != nil {
+		return Response{
+			Success: false,
+			Error:   fmt.Sprintf("error updating task: %v", err),
+		}
+	}
+
+	return Response{
+		Success: true,
+	}
+}
+
 func (s *Service) checkOverdueTasks() error {
-	// NOTE: Check for notifications once per hour
 	if !s.lastNotificationCheck.IsZero() && time.Since(s.lastNotificationCheck) < 1*time.Hour {
 		log.Println("Skipping overdue task check, last check was less than 1 hour ago")
 		return nil
@@ -149,7 +175,6 @@ func (s *Service) checkOverdueTasks() error {
 	log.Printf("Found %d overdue tasks", len(overdueTasks))
 
 	for _, task := range overdueTasks {
-		// NOTE: Skip if we've already notified about this task in this daemon session
 		if s.notifiedTaskIDs[task.ID] {
 			log.Printf("Task %s was already notified in this session, skipping", task.ID)
 			continue

@@ -7,9 +7,7 @@ import (
 	"github.com/adrianpk/tyn/internal/model"
 )
 
-// Repo defines the repository interface needed by the service
 type Repo interface {
-	// Node
 	Create(ctx context.Context, node model.Node) error
 	Get(ctx context.Context, id string) (model.Node, error)
 	Update(ctx context.Context, node model.Node) error
@@ -18,7 +16,8 @@ type Repo interface {
 	GetNodesByDay(day time.Time) ([]model.Node, error)
 	GetAllTasks(ctx context.Context) ([]model.Node, error)
 	GetOverdueTasks(ctx context.Context, notificationType string) ([]model.Node, error)
-	// Notification
+	GetTaskByID(ctx context.Context, id string) (model.Node, error)
+	UpdateTask(ctx context.Context, node model.Node) error
 	CreateNotification(ctx context.Context, notification model.Notification) error
 	GetNotification(ctx context.Context, id string) (model.Notification, error)
 	GetNotificationByNodeAndType(ctx context.Context, nodeID, notificationType string) (model.Notification, error)
