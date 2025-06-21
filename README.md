@@ -164,9 +164,49 @@ And the task will appear as:
 
 Note that the overdue indicator (⌛) disappears when a task is marked as done, even if its due date has passed.
 
-### List Nodes
+### Update Tasks
 
-Tyn provides flexible commands for listing and filtering all types of nodes:
+Tyn provides convenient commands to update various aspects of your tasks:
+
+```
+# Update task text content
+tn tasks update d356 --text "Fix memory leak in authentication service"
+
+# Set or update a task's due date
+tn tasks update d356 --due "2025-07-01"
+
+# Change task tags
+tn tasks update d356 --tags "bug,high-priority"
+
+# Update task location/places
+tn tasks update d356 --places "office,backend-team"
+
+# Combine multiple updates in one command
+tn tasks update d356 --text "Prepare Q2 financial report" --due "2025-06-30" --tags "finance,quarterly" --places "accounting"
+```
+
+You can also use dedicated commands for specific updates:
+
+```
+# Text updates
+tn tasks text d356 "Call vendor about license renewal issues"
+
+# Tag management
+tn tasks tag add d356 blocker
+tn tasks tag remove d356 blocker
+tn tasks tag clear d356
+
+# Place management
+tn tasks place add d356 meeting-room
+tn tasks place remove d356 meeting-room
+tn tasks place clear d356
+
+# Due date management
+tn tasks date set d356 2025-07-15
+tn tasks date remove d356
+```
+
+### List Nodes
 
 ```
 tn list               # List all nodes

@@ -23,6 +23,37 @@ type Response struct {
 	Error   string          `json:"error,omitempty"`
 }
 
+type UpdateParams struct {
+	ID     string   `json:"id"`
+	Tags   []string `json:"tags,omitempty"`
+	Places []string `json:"places,omitempty"`
+	Due    string   `json:"due,omitempty"`
+	Text   string   `json:"text,omitempty"`
+}
+
+type TextParams struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+}
+
+type TagCmdParams struct {
+	ID        string   `json:"id"`
+	Tags      []string `json:"tags"`
+	Operation string   `json:"operation"`
+}
+
+type PlaceCmdParams struct {
+	ID        string   `json:"id"`
+	Places    []string `json:"places"`
+	Operation string   `json:"operation"`
+}
+
+type DateCmdParams struct {
+	ID        string `json:"id"`
+	Date      string `json:"date"`
+	Operation string `json:"operation"`
+}
+
 func SendCommand(cmd string, params interface{}) (*Response, error) {
 	var paramsJSON []byte
 	var err error
@@ -158,4 +189,43 @@ func getSocketPath() (string, error) {
 	}
 
 	return filepath.Join(home, SocketFile), nil
+}
+
+func SendTagCommand(operation string, id string, tags []string) (Response, error) {
+	params := TagCmdParams{
+		ID:        id,
+		Tags:      tags,
+		Operation: operation,
+	}
+	resp, err := SendCommand("tag", params)
+	if err != nil {
+		return Response{}, err
+	}
+	return *resp, nil
+}
+
+func SendPlaceCommand(operation string, id string, places []string) (Response, error) {
+	params := PlaceCmdParams{
+		ID:        id,
+		Places:    places,
+		Operation: operation,
+	}
+	resp, err := SendCommand("place", params)
+	if err != nil {
+		return Response{}, err
+	}
+	return *resp, nil
+}
+
+func SendDateCommand(operation string, id string, date string) (Response, error) {
+	params := DateCmdParams{
+		ID:        id,
+		Date:      date,
+		Operation: operation,
+	}
+	resp, err := SendCommand("date", params)
+	if err != nil {
+		return Response{}, err
+	}
+	return *resp, nil
 }
