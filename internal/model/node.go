@@ -6,6 +6,18 @@ import (
 	"github.com/google/uuid"
 )
 
+var NodeType = struct {
+	Note  string
+	Task  string
+	Link  string
+	Draft string
+}{
+	Note:  "note",
+	Task:  "task",
+	Link:  "link",
+	Draft: "draft",
+}
+
 type Node struct {
 	ID      string
 	Type    string
@@ -14,6 +26,7 @@ type Node struct {
 	Tags    []string
 	Places  []string
 	Status  string
+	Draft   string
 	Date    time.Time
 	DueDate *time.Time
 }
@@ -23,7 +36,7 @@ func (n *Node) GenID() {
 }
 
 func (n *Node) IsOverdue() bool {
-	if n.Type != "task" || n.DueDate == nil {
+	if n.Type != NodeType.Task || n.DueDate == nil {
 		return false
 	}
 

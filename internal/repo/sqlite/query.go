@@ -9,6 +9,7 @@ var Query = map[string]string{
 		tags TEXT,
 		places TEXT,
 		status TEXT,
+		draft TEXT,
 		date DATETIME,
 		due_date DATETIME
 	);`,
@@ -22,17 +23,17 @@ var Query = map[string]string{
 	);`,
 
 	// Node queries
-	"create":            `INSERT INTO nodes (id, type, content, link, tags, places, status, date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"get":               `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id = ?`,
-	"get_by_partial_id": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes WHERE id LIKE ? || '%'`,
-	"update":            `UPDATE nodes SET type=?, content=?, link=?, tags=?, places=?, status=?, date=?, due_date=? WHERE id=?`,
+	"create":            `INSERT INTO nodes (id, type, content, link, tags, places, status, draft, date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"get":               `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes WHERE id = ?`,
+	"get_by_partial_id": `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes WHERE id LIKE ? || '%'`,
+	"update":            `UPDATE nodes SET type=?, content=?, link=?, tags=?, places=?, status=?, draft=?, date=?, due_date=? WHERE id=?`,
 	"delete":            `DELETE FROM nodes WHERE id = ?`,
-	"list":              `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes`,
-	"list_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
+	"list":              `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes`,
+	"list_by_day": `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes 
 		WHERE date >= ? AND date < ?`,
-	"list_notes_and_links_by_day": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes 
+	"list_notes_and_links_by_day": `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes 
 		WHERE (type = 'note' OR type = 'link') AND date >= ? AND date < ?`,
-	"list_all_tasks": `SELECT id, type, content, link, tags, places, status, date, due_date FROM nodes
+	"list_all_tasks": `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes
 		WHERE type = 'task' ORDER BY date`,
 
 	// Notification queries
@@ -51,7 +52,7 @@ var Query = map[string]string{
 	"delete_notification_by_node": `DELETE FROM notifications WHERE node_id = ?`,
 	"list_notifications": `SELECT id, node_id, notification_type, last_notified_at, times_notified 
 		FROM notifications`,
-	"get_overdue_tasks": `SELECT n.id, n.type, n.content, n.link, n.tags, n.places, n.status, n.date, n.due_date
+	"get_overdue_tasks": `SELECT n.id, n.type, n.content, n.link, n.tags, n.places, n.status, n.draft, n.date, n.due_date
 		FROM nodes n
 		WHERE n.type = 'task'
 		AND n.due_date IS NOT NULL

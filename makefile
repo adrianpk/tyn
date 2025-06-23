@@ -99,7 +99,9 @@ demo:
 	$(TYN_DEV) bin/tn capture "Design database schema :done #projectX @home Finalized user and product tables"; \
 	$(TYN_DEV) bin/tn capture "Interesting article on CLI tools https://dev.to/cli-tools #reading Bookmark for weekend ^$$today_date"; \
 	$(TYN_DEV) bin/tn capture "Order new laptop :wip #shopping @online Looking at developer-focused models"; \
-	$(TYN_DEV) bin/tn capture "Fix critical bug #urgent :wip ^2025-06-10 Need to fix memory leak issue for release"
+	$(TYN_DEV) bin/tn capture "Fix critical bug #urgent :wip ^2025-06-10 Need to fix memory leak issue for release"; \
+	$(TYN_DEV) bin/tn capture +code-echo "Network Security Alert: Identifying Echo-Pattern Vulnerabilities #security Our team recently discovered a critical vulnerability in proxy services that process high-volume request batching."; \
+	$(TYN_DEV) bin/tn capture +code-echo "Key findings: The malformed packet signatures trigger a reflection pattern, duplicating header data across node boundaries. #networking This can be detected by implementing checksum verification at each network hop. @devops"
 	@echo "Demo data created successfully. Run 'make list' to see results."
 
 test-notification:

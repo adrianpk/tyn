@@ -75,7 +75,7 @@ func (r *TynRepo) Create(ctx context.Context, node model.Node) error {
 	_, err := r.db.ExecContext(ctx, Query["create"],
 		node.ID, node.Type, node.Content, node.Link,
 		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
-		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr,
+		node.Draft, node.Date.UTC().Format(model.DateTimeFormat), dueDateStr,
 	)
 	return err
 }
@@ -86,7 +86,7 @@ func (r *TynRepo) Get(ctx context.Context, id string) (model.Node, error) {
 	var dueDate sql.NullTime
 
 	row := r.db.QueryRowContext(ctx, Query["get"], id)
-	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
+	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate)
 	if err != nil {
 		return node, err
 	}
@@ -110,7 +110,7 @@ func (r *TynRepo) Update(ctx context.Context, node model.Node) error {
 	_, err := r.db.ExecContext(ctx, Query["update"],
 		node.Type, node.Content, node.Link,
 		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
-		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
+		node.Draft, node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
 	)
 	return err
 }
@@ -125,7 +125,7 @@ func (r *TynRepo) UpdateTask(ctx context.Context, node model.Node) error {
 	_, err := r.db.ExecContext(ctx, Query["update"],
 		node.Type, node.Content, node.Link,
 		stringSliceToCSV(node.Tags), stringSliceToCSV(node.Places), node.Status,
-		node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
+		node.Draft, node.Date.UTC().Format(model.DateTimeFormat), dueDateStr, node.ID,
 	)
 	return err
 }
@@ -152,7 +152,7 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 		var tags, places string
 		var dueDate sql.NullTime
 
-		err := rows.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
+		err := rows.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate)
 		if err != nil {
 			return nil, err
 		}
@@ -199,7 +199,7 @@ func (r *TynRepo) GetNodesByDay(day time.Time) ([]model.Node, error) {
 
 		err := rows.Scan(
 			&node.ID, &node.Type, &node.Content, &node.Link,
-			&tags, &places, &node.Status, &node.Date, &dueDate,
+			&tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -243,7 +243,7 @@ func (r *TynRepo) GetNotesAndLinksByDay(day time.Time) ([]model.Node, error) {
 
 		err := rows.Scan(
 			&node.ID, &node.Type, &node.Content, &node.Link,
-			&tags, &places, &node.Status, &node.Date, &dueDate,
+			&tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -380,7 +380,7 @@ func (r *TynRepo) GetOverdueTasks(ctx context.Context, notificationType string) 
 
 		err := rows.Scan(
 			&node.ID, &node.Type, &node.Content, &node.Link,
-			&tags, &places, &node.Status, &node.Date, &dueDate,
+			&tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -425,7 +425,7 @@ func (r *TynRepo) GetAllTasks(ctx context.Context) ([]model.Node, error) {
 
 		err := rows.Scan(
 			&task.ID, &task.Type, &task.Content, &task.Link,
-			&tags, &places, &task.Status, &task.Date, &dueDate,
+			&tags, &places, &task.Status, &task.Draft, &task.Date, &dueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -453,9 +453,8 @@ func (r *TynRepo) GetTaskByID(ctx context.Context, id string) (model.Node, error
 	var tags, places string
 	var dueDate sql.NullTime
 
-	// Try exact match first
 	row := r.db.QueryRowContext(ctx, Query["get"], id)
-	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Date, &dueDate)
+	err := row.Scan(&node.ID, &node.Type, &node.Content, &node.Link, &tags, &places, &node.Status, &node.Draft, &node.Date, &dueDate)
 	if err == nil {
 		node.Tags = csvToStringSlice(tags)
 		node.Places = csvToStringSlice(places)
@@ -466,7 +465,6 @@ func (r *TynRepo) GetTaskByID(ctx context.Context, id string) (model.Node, error
 		return node, nil
 	}
 
-	// If exact match fails, try partial match
 	rows, err := r.db.QueryContext(ctx, Query["get_by_partial_id"], id)
 	if err != nil {
 		return model.Node{}, fmt.Errorf("task with ID '%s' not found: %v", id, err)
@@ -479,7 +477,7 @@ func (r *TynRepo) GetTaskByID(ctx context.Context, id string) (model.Node, error
 		var t, p string
 		var dd sql.NullTime
 
-		err := rows.Scan(&n.ID, &n.Type, &n.Content, &n.Link, &t, &p, &n.Status, &n.Date, &dd)
+		err := rows.Scan(&n.ID, &n.Type, &n.Content, &n.Link, &t, &p, &n.Status, &n.Draft, &n.Date, &dd)
 		if err != nil {
 			return model.Node{}, fmt.Errorf("error scanning task: %v", err)
 		}
@@ -499,13 +497,11 @@ func (r *TynRepo) GetTaskByID(ctx context.Context, id string) (model.Node, error
 	}
 
 	if len(nodes) > 1 {
-		// If multiple matches, look for an exact prefix match
 		for _, n := range nodes {
 			if strings.HasPrefix(n.ID, id) {
 				return n, nil
 			}
 		}
-		// Otherwise return the first match
 		log.Printf("Warning: Multiple tasks found with ID prefix '%s', using first match", id)
 	}
 
@@ -532,6 +528,20 @@ func migrate(db *sqlx.DB) error {
 	_, err = db.Exec(Query["create_notifications_table"])
 	if err != nil {
 		return err
+	}
+
+	var hasDraft bool
+	err = db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('nodes') WHERE name='draft'").Scan(&hasDraft)
+	if err != nil {
+		return err
+	}
+
+	if !hasDraft {
+		log.Printf("Adding draft column to nodes table")
+		_, err = db.Exec("ALTER TABLE nodes ADD COLUMN draft TEXT")
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

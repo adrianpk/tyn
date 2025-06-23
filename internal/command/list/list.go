@@ -158,7 +158,7 @@ func printNode(node model.Node) string {
 	dateStr := node.Date.Format("2006-01-02 15:04:05 -0700 MST")
 
 	return fmt.Sprintf(
-		"ID: %s\nType: %s\nContent: %s\nTags: %v\nPlaces: %v\nStatus: %s\nLink: %s\nDate: %s\nDueDate: %s\n",
+		"ID: %s\nType: %s\nContent: %s\nTags: %v\nPlaces: %v\nStatus: %s\nLink: %s\nDate: %s\nDueDate: %s\nDraft: %s\n",
 		node.ID,
 		node.Type,
 		node.Content,
@@ -168,5 +168,6 @@ func printNode(node model.Node) string {
 		node.Link,
 		dateStr,
 		dueDateStr,
+		node.Draft,
 	)
 }
