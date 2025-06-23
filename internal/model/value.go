@@ -9,15 +9,17 @@ type TypeVal string
 type StatusVal string
 
 type typeVal struct {
-	Note string
-	Task string
-	Link string
+	Note  string
+	Task  string
+	Link  string
+	Draft string
 }
 
 var Type = typeVal{
-	Note: "note",
-	Task: "task",
-	Link: "link",
+	Note:  "note",
+	Task:  "task",
+	Link:  "link",
+	Draft: "draft",
 }
 
 func (t typeVal) Values() []string {
@@ -25,6 +27,7 @@ func (t typeVal) Values() []string {
 		t.Note,
 		t.Task,
 		t.Link,
+		t.Draft,
 	}
 }
 
@@ -46,6 +49,8 @@ func (t typeVal) Label(v string) string {
 		return "Task"
 	case t.Link:
 		return "Link"
+	case t.Draft:
+		return "Draft"
 	default:
 		return v
 	}

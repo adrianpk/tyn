@@ -16,6 +16,7 @@ var (
 	statusPattern = regexp.MustCompile(`:([a-zA-Z0-9-]+)`)
 	datePattern   = regexp.MustCompile(`\^([\d\-T:_]+)`)
 	urlPattern    = regexp.MustCompile(`https?://[^\s]+`)
+	draftPattern  = regexp.MustCompile(`\+([a-zA-Z0-9-_]+)`)
 )
 
 func Parse(input string) (model.Node, error) {
@@ -26,6 +27,33 @@ func Parse(input string) (model.Node, error) {
 	}
 	node.GenID()
 
+	draftMatch := draftPattern.FindStringSubmatch(input)
+	if len(draftMatch) > 1 {
+		draft := draftMatch[1]
+		node.Draft = draft
+		node.Type = model.Type.Draft
+		input = draftPattern.ReplaceAllString(input, "")
+	}
+
+	// Process tags - available for all node types including drafts
+	tagMatches := tagPattern.FindAllStringSubmatch(input, -1)
+	for _, match := range tagMatches {
+		if len(match) > 1 {
+			node.Tags = append(node.Tags, match[1])
+		}
+	}
+	input = tagPattern.ReplaceAllString(input, "")
+
+	// Process places - also available for all node types
+	placeMatches := placePattern.FindAllStringSubmatch(input, -1)
+	for _, match := range placeMatches {
+		if len(match) > 1 {
+			node.Places = append(node.Places, match[1])
+		}
+	}
+	input = placePattern.ReplaceAllString(input, "")
+
+	// Process URLs - for drafts, we'll still extract and store links, but not change the type
 	urls := urlPattern.FindAllString(input, -1)
 	if len(urls) > 0 {
 		node.Link = urls[0]
@@ -35,22 +63,7 @@ func Parse(input string) (model.Node, error) {
 	}
 	input = urlPattern.ReplaceAllString(input, "")
 
-	tagMatches := tagPattern.FindAllStringSubmatch(input, -1)
-	for _, match := range tagMatches {
-		if len(match) > 1 {
-			node.Tags = append(node.Tags, match[1])
-		}
-	}
-	input = tagPattern.ReplaceAllString(input, "")
-
-	placeMatches := placePattern.FindAllStringSubmatch(input, -1)
-	for _, match := range placeMatches {
-		if len(match) > 1 {
-			node.Places = append(node.Places, match[1])
-		}
-	}
-	input = placePattern.ReplaceAllString(input, "")
-
+	// Process status - for drafts, we can still have a status but won't change the type
 	statusMatch := statusPattern.FindStringSubmatch(input)
 	if len(statusMatch) > 1 {
 		node.Status = statusMatch[1]
@@ -60,6 +73,7 @@ func Parse(input string) (model.Node, error) {
 	}
 	input = statusPattern.ReplaceAllString(input, "")
 
+	// Process due date
 	dateMatch := datePattern.FindStringSubmatch(input)
 	if len(dateMatch) > 1 {
 		dateStr := strings.TrimSpace(dateMatch[1])
@@ -98,6 +112,7 @@ func Parse(input string) (model.Node, error) {
 
 	node.Content = strings.TrimSpace(input)
 
+	// Set the default type if not already set (draft type will be preserved)
 	if node.Type == "" {
 		if node.Status != "" {
 			node.Type = model.Type.Task
