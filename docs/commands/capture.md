@@ -33,12 +33,15 @@ You can also use the aliases `cap` or `c`.
 ```
 
 ### Special Syntax
-- `#tag` — Add tags to any node
-- `@place` — Add a place/location
-- `:status` — Set a status (for tasks)
-- `^date` — Set a due date (for tasks)
-- `+draft` — Start a draft capture (always type `draft`)
-- URLs are automatically recognized as links
+
+| Syntax    | Description                                    |
+|-----------|------------------------------------------------|
+| `#tag`    | Add tags to any node                           |
+| `@place`  | Add a place/location                           |
+| `:status` | Set a status (for tasks)                       |
+| `^date`   | Set a due date (for tasks)                     |
+| `+draft`  | Start a draft capture (always type `draft`)    |
+| URLs      | Automatically recognized as links              |
 
 Drafts are grouped by their draft name and can be combined later. A future command will allow you to combine all entries with the same draft name into a single markdown document.
 
