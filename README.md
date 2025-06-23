@@ -49,6 +49,9 @@ You can capture a node directly from the command line. Here are some real-world 
 
 # Capture a completed task with a specific date
  tn capture "Submit tax report :done ^2025-04-15 #finance"
+
+# Capture a draft snippet for a future document
+ tn capture +code-echo "Network Security Alert: Identifying Echo-Pattern Vulnerabilities #security Our team recently discovered a critical vulnerability in proxy services."
 ```
 
 Note: The double quotes in the examples above are used for clarity, but they are not required to capture notes. You can omit them if your input doesn't contain special characters that need escaping in your shell.
@@ -206,34 +209,17 @@ tn tasks date set d356 2025-07-15
 tn tasks date remove d356
 ```
 
-### List Nodes
+For a full list and detailed explanation of all commands, see [docs/commands/index.md](docs/commands/index.md).
 
-```
-tn list               # List all nodes
-tn list task          # List only tasks
-tn list note          # List only notes
-tn list link          # List only links
-```
+## Roadmap
 
-You can apply various filters with flags:
+While additional features, new commands, and integrations are being considered for the future, the next efforts will be dedicated to:
 
-```
-tn list --tag projectX      # Filter by tag
-tn list --place home        # Filter by place
-tn list --status todo       # Filter by status (for tasks)
-```
+- Polishing and strengthening the current features.
+- Testing and covering edge cases to ensure reliable behavior.
+- Building a robust test suite to guarantee that future refactoring does not introduce regressions or new bugs.
 
-You can also combine node type and filters:
-
-```
-tn list task --tag projectX --place home   # Tasks with projectX tag at home
-tn list note --tag meeting                 # Meeting notes
-```
-
-For convenience, the `list` command can also be invoked using the shorter aliases `ls` or `l` (e.g., `tn ls`, `tn l task`).
-
-## WIP
-This project is a work in progress. Output formatting and features are basic and intended as a starting point for further development.
+The current priority is to ensure the existing functionality is solid and well-tested.
 
 ## License
 MIT
