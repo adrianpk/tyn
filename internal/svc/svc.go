@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/adrianpk/tyn/internal/config"
 	"github.com/adrianpk/tyn/internal/model"
 )
 
@@ -14,12 +15,14 @@ type ParserFunc func(input string) (model.Node, error)
 type Svc struct {
 	Repo   Repo
 	Parser ParserFunc
+	Config *config.Config
 }
 
-func New(repo Repo) *Svc {
+func New(repo Repo, config *config.Config) *Svc {
 	return &Svc{
 		Repo:   repo,
 		Parser: Parse,
+		Config: config,
 	}
 }
 
@@ -129,7 +132,6 @@ func (s *Svc) GetOverdueTasks(ctx context.Context) ([]model.Node, error) {
 // NotifyOverdueTask creates or updates a notification record for an overdue task
 // and returns whether the notification was created (true) or updated (false)
 func (s *Svc) NotifyOverdueTask(ctx context.Context, nodeID string) (bool, error) {
-	// Check if notification already exists for this node
 	notification, err := s.Repo.GetNotificationByNodeAndType(ctx, nodeID, model.NotificationType.DueDate)
 	if err != nil {
 		if err == sql.ErrNoRows {

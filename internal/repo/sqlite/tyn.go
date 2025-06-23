@@ -10,13 +10,30 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adrianpk/tyn/internal/config"
 	"github.com/adrianpk/tyn/internal/model"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
 
 type TynRepo struct {
-	db *sqlx.DB
+	db  *sqlx.DB
+	cfg *config.Config
+}
+
+func NewTynRepo(cfg *config.Config) (*TynRepo, error) {
+	dbPath := getDBPath()
+	db, err := sqlx.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, err
+	}
+
+	err = migrate(db)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TynRepo{db: db, cfg: cfg}, nil
 }
 
 func getDBPath() string {
@@ -46,20 +63,6 @@ func getDBPath() string {
 	dbPath := filepath.Join(tynDir, "tyn.db")
 	log.Printf("Using database at: %s", dbPath)
 	return dbPath
-}
-
-func NewTynRepo() (*TynRepo, error) {
-	dbPath := getDBPath()
-	db, err := sqlx.Open("sqlite", dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	err = migrate(db)
-	if err != nil {
-		return nil, err
-	}
-	return &TynRepo{db: db}, nil
 }
 
 func (r *TynRepo) Create(ctx context.Context, node model.Node) error {
@@ -139,8 +142,20 @@ func (r *TynRepo) List(ctx context.Context) ([]model.Node, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	daysLimit := r.cfg.DoneTaskListDays
+	cutoff := time.Now().AddDate(0, 0, -daysLimit)
+	cutoffStr := cutoff.Format(model.DateTimeFormat)
 
-	rows, err := r.db.QueryContext(ctx, Query["list"])
+	query := `SELECT id, type, content, link, tags, places, status, draft, date, due_date FROM nodes
+		WHERE type != 'task'
+		   OR (
+			   type = 'task' AND (
+				   status NOT IN ('done', 'canceled')
+				   OR (status IN ('done', 'canceled') AND date >= ?)
+			   )
+		   )`
+
+	rows, err := r.db.QueryContext(ctx, query, cutoffStr)
 	if err != nil {
 		return nil, err
 	}
