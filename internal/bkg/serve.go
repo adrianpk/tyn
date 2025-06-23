@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/adrianpk/tyn/internal/config"
 	"github.com/adrianpk/tyn/internal/journal"
 	"github.com/adrianpk/tyn/internal/notify"
 	"github.com/adrianpk/tyn/internal/repo/sqlite"
@@ -24,7 +25,7 @@ type Service struct {
 	notifiedTaskIDs       map[string]bool
 }
 
-func ServeLoop(isDaemon bool) {
+func ServeLoop(isDaemon bool, cfg *config.Config) {
 	if isDaemon {
 		logFile, err := logFilePath()
 		if err != nil {
@@ -44,13 +45,13 @@ func ServeLoop(isDaemon bool) {
 
 	log.Println("Starting Tyn background service...")
 
-	repo, err := sqlite.NewTynRepo()
+	repo, err := sqlite.NewTynRepo(cfg)
 	if err != nil {
 		log.Fatalf("Error initializing repository: %v", err)
 	}
 
 	service := &Service{
-		svc:              svc.New(repo),
+		svc:              svc.New(repo, cfg),
 		journalGenerator: journal.New(repo),
 		notifiedTaskIDs:  make(map[string]bool),
 	}
@@ -93,7 +94,7 @@ func ServeLoop(isDaemon bool) {
 			}
 		}
 
-		time.Sleep(DefaultPollInterval)
+		time.Sleep(cfg.PollInterval)
 	}
 }
 
